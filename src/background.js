@@ -1,6 +1,6 @@
 "use strict";
 
-import { app, protocol, BrowserWindow } from "electron";
+import { app, protocol, BrowserWindow, ipcMain } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 // import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -42,6 +42,13 @@ function createWindow() {
 
   win.on("closed", () => {
     win = null;
+  });
+
+  ipcMain.on("relaunch", (event, arg) => {
+    if (arg) {
+      app.relaunch();
+      app.exit(0);
+    }
   });
 }
 

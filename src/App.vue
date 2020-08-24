@@ -3,6 +3,7 @@
     <h1>hello world, version: {{ version }}</h1>
     <h1 @click="login">login</h1>
     <h1 @click="logout">logout</h1>
+    <el-button>el-button</el-button>
   </div>
 </template>
 

@@ -37,7 +37,7 @@ module.exports = {
       .test(/\.node$/)
       .use("native-ext-loader")
       .loader("native-ext-loader")
-      .tap((item) => {
+      .tap(() => {
         const options = {};
         const isPrd = process.env.NODE_ENV === "production";
 

@@ -1,22 +1,21 @@
 {
   "name": "vuetify-electron-app",
   "version": "0.1.1",
+  "private": true,
   "description": "electron sdk vue",
   "author": "jinghui-luo",
-  "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "build:32": "cross-env NODE_ENV=production vue-cli-service electron:build --win --ia32",
-    "start": "cross-env NODE_ENV=development vue-cli-service electron:serve",
     "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps"
+    "postuninstall": "electron-builder install-app-deps",
+    "start": "cross-env NODE_ENV=development vue-cli-service electron:serve"
   },
   "main": "background.js",
   "dependencies": {
     "core-js": "^3.6.5",
-    "element-ui": "^2.13.2",
     "vue": "^3.0.0-0"
   },
   "devDependencies": {
@@ -34,7 +33,8 @@
     "eslint-plugin-vue": "^7.0.0-0",
     "native-ext-loader": "^2.3.0",
     "node-loader": "^1.0.1",
-    "vue-cli-plugin-electron-builder": "~2.0.0-rc.4"
+    "vue-cli-plugin-electron-builder": "~2.0.0-rc.4",
+    "vue-cli-plugin-element": "~1.0.1"
   },
   "eslintConfig": {
     "root": true,

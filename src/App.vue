@@ -1,20 +1,65 @@
 <template>
   <div id="app">
-    <h1>hello world</h1>
+    <h1>hello world, version: {{ version }}</h1>
+    <h1 @click="login">login</h1>
+    <h1 @click="logout">logout</h1>
+
+    <el-row>
+      <el-button>默认按钮</el-button>
+      <el-button type="primary">主要按钮</el-button>
+      <el-button type="success">成功按钮</el-button>
+    </el-row>
   </div>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
-import { BrowserWindow } from "electron";
-import path from "path";
+import { XYRTC } from "@xylink/xy-electron-sdk";
+
+let xyRTC;
 
 export default {
   name: "App",
+  data() {
+    return {
+      version: "",
+    };
+  },
   components: {},
   created() {
-    console.log("app: ", BrowserWindow);
-    console.log("path: ", path);
+    console.log("XYRTC: ", XYRTC);
+
+    xyRTC = XYRTC.getXYInstance({
+      httpProxy: "cloud.xylink.com",
+    });
+
+    xyRTC.on("CallState", (e) => {
+      console.log("call state e: ", e);
+    });
+
+    xyRTC.on("LoginState", (e) => {
+      console.log("login state: ", e);
+    });
+
+    xyRTC.on("VideoStreams", (e) => {
+      console.log("video streams:", e);
+    });
+
+    xyRTC.on("ScreenInfo", (e) => {
+      console.log("screen info: ", e);
+    });
+
+    const version = xyRTC.getVersion();
+
+    this.version = version;
+  },
+  methods: {
+    login: () => {
+      console.log("login");
+      xyRTC.login("+86-15353622534", "111111");
+    },
+    logout: () => {
+      xyRTC.logout();
+    },
   },
 };
 </script>

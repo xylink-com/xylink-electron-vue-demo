@@ -1,4 +1,4 @@
-# vuetify-electron-app
+# xy-electron-sdk-vue-demo
 
 注意：详细配置方式见 sdk 文档，针对 vue 项目的配置见当前项目。
 

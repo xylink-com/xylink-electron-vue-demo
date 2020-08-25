@@ -3,7 +3,11 @@
   "version": "0.1.6",
   "private": true,
   "description": "electron sdk vue",
-  "author": "jinghui-luo",
+  "author": {
+    "name": "luojinghui",
+    "email": "luojinghui424@gmail.com",
+    "url": "https://github.com/luojinghui"
+  },
   "scripts": {
     "dev": "cross-env NODE_ENV=development vue-cli-service electron:serve",
     "build:32": "cross-env NODE_ENV=production vue-cli-service electron:build --win --ia32",

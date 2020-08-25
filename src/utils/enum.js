@@ -8,9 +8,9 @@ export const USER_INFO = {
   meeting: "",
   meetingPassword: "",
   meetingName: "",
-  extID: "40260e9046bae2da238ac0b0c572326b91726a83",
-  extUserId: "mttt",
-  displayName: "ceshi",
+  extID: "",
+  extUserId: "",
+  displayName: "",
 };
 
 export const DEFAULT_PROXY = "cloud.xylink.com";

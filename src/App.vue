@@ -114,7 +114,15 @@
 
         <div class="meeting-content">
           <div class="meeting-layout" :style="layoutStyle">
-            <!-- {renderLayout()} -->
+            <Video
+              v-for="val in layoutList"
+              :key="val.key"
+              :index="val.key"
+              :width="val.position.width"
+              :height="val.position.height"
+              :item="val"
+              :xyRTC="xyRTC"
+            ></Video>
           </div>
         </div>
 
@@ -133,7 +141,7 @@
               <div class="icon"></div>
               <div class="title">结束共享</div>
             </div>
-            <div v-else onClick="{shareContent}" class="button share">
+            <div v-else @click="shareContent" class="button share">
               <div class="icon"></div>
               <div class="title">共享</div>
             </div>
@@ -173,6 +181,7 @@ import { ipcRenderer } from "electron";
 import { USER_INFO, DEFAULT_PROXY } from "./utils/enum";
 import { Message } from "element-ui";
 import cloneDeep from "clone-deep";
+import Video from "./components/Video/index.vue";
 
 const store = new Store();
 let xyRTC;
@@ -187,6 +196,7 @@ const env = String(proxy).split(".")[0] || "cloud";
 
 export default {
   name: "App",
+  components: { Video },
   data() {
     return {
       version: "",
@@ -209,6 +219,28 @@ export default {
     };
   },
   computed: {
+    xyRTC() {
+      return xyRTC;
+    },
+    layoutList() {
+      const newLayoutList = this.layout.map((val) => {
+        const { isContent, participantId } = val.roster;
+        const mediagroupid = isContent ? 1 : 0;
+        // 记录key值，此值必须为pid + mediagroupId之加，否则，无法判断是content还是people设备
+        const key = participantId + mediagroupid;
+        const { height, left, top, width } = val.positionStyle;
+        // 将对象style重写为string style样式，方式给vue使用
+        const positionStyle = `left: ${left}; top: ${top}; height: ${height}; width: ${width}`;
+
+        return {
+          ...val,
+          key,
+          positionStyle,
+        };
+      });
+
+      return newLayoutList;
+    },
     layoutStyle() {
       const { layoutWidth, layoutHeight } = this.screenInfo;
       const layoutStyle = `width:${layoutWidth}px; height:${layoutHeight}px`;
@@ -246,10 +278,7 @@ export default {
       };
     },
   },
-  components: {},
   mounted() {
-    console.log("XYRTC: ", XYRTC);
-
     xyRTC = XYRTC.getXYInstance({
       httpProxy: proxy,
     });
@@ -258,9 +287,8 @@ export default {
 
     this.version = version;
 
+    // call status event
     xyRTC.on("CallState", (e) => {
-      console.log("call state e: ", e);
-
       const { state, reason } = e;
 
       if (state === "Connected") {
@@ -279,9 +307,8 @@ export default {
       }
     });
 
+    // login status event
     xyRTC.on("LoginState", (e) => {
-      console.log("login state: ", e);
-
       if (e.state === "Logined") {
         message.info("登录成功");
 
@@ -299,18 +326,17 @@ export default {
       }
     });
 
+    // video streams change event
     xyRTC.on("VideoStreams", (e) => {
-      console.log("video streams:", e);
-
       this.layout = cloneDeep(e);
     });
 
+    // screen size change event
     xyRTC.on("ScreenInfo", (e) => {
-      console.log("screen info: ", e);
-
       this.screenInfo = e;
     });
 
+    // content status event
     xyRTC.on("ContentState", (e) => {
       if (e === 1) {
         message.info(`您正在分享Content内容`);
@@ -322,10 +348,6 @@ export default {
     });
   },
   methods: {
-    login() {
-      console.log("login");
-      xyRTC.login("+86-15353622534", "111111");
-    },
     logout() {
       xyRTC.logout();
     },
@@ -339,8 +361,6 @@ export default {
       this.visible = !this.visible;
     },
     externalLogin() {
-      console.log("login info: ", this.info);
-
       const { extID, extUserId, displayName } = this.info;
 
       xyRTC.loginExternalAccount(extID, extUserId, displayName);

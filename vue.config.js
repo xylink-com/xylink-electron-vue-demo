@@ -21,6 +21,7 @@ module.exports = {
             "./swresample-3.dll",
             "./swscale-5.dll",
             "./xin265_32.dll",
+            // 将node_moduels里xy-electron-sdk包中的node包复制到resources目录上，方便打包调用
             {
               from: "node_modules/@xylink/xy-electron-sdk/build/Release/",
               to: "./resources",
@@ -42,6 +43,7 @@ module.exports = {
         const isPrd = process.env.NODE_ENV === "production";
 
         options["name"] = "[name].[ext]";
+        // 开发环境将.node的寻找路径设置到node_modules目录，发布环境设置为resources目录上。
         options["rewritePath"] = isPrd
           ? "./resources"
           : path.resolve(

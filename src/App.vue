@@ -118,8 +118,6 @@
               v-for="val in layoutList"
               :key="val.key"
               :index="val.key"
-              :width="val.position.width"
-              :height="val.position.height"
               :item="val"
               :xyRTC="xyRTC"
             ></Video>

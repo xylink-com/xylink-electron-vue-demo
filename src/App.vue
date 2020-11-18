@@ -224,10 +224,10 @@ export default {
     },
     layoutList() {
       const newLayoutList = this.layout.map((val) => {
-        const { isContent, participantId } = val.roster;
+        const { isContent, callUri } = val.roster;
         const mediagroupid = isContent ? 1 : 0;
-        // 记录key值，此值必须为pid + mediagroupId之加，否则，无法判断是content还是people设备
-        const key = participantId + mediagroupid;
+        // 记录key值，此值必须为callUri + mediagroupId之加，否则，无法判断是content还是people设备
+        const key = callUri + mediagroupid;
         const { height, left, top, width } = val.positionStyle;
         // 将对象style重写为string style样式，方式给vue使用
         const positionStyle = `left: ${left}; top: ${top}; height: ${height}; width: ${width}`;
@@ -281,6 +281,7 @@ export default {
   mounted() {
     xyRTC = XYRTC.getXYInstance({
       httpProxy: proxy,
+      model: "auto",
     });
 
     const version = xyRTC.getVersion();
@@ -296,7 +297,6 @@ export default {
           // start render
           this.status = "meeting";
 
-          xyRTC.createLocalRender();
           message.info("入会成功");
         }
       } else if (state === "Disconnected") {

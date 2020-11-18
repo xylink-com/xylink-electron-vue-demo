@@ -5,7 +5,7 @@ module.exports = {
     electronBuilder: {
       nodeIntegration: true,
       builderOptions: {
-        productName: "小鱼云视频",
+        productName: "小鱼云视频vue",
         appId: "org.xylink.vue",
         files: [],
         win: {
@@ -16,10 +16,16 @@ module.exports = {
             "./avfilter-7.dll",
             "./avformat-58.dll",
             "./avutil-56.dll",
+            "./concrt140.dll",
+            "./I420ToARGB.cso",
+            "./msvcp140.dll",
             "./NemoSdk.dll",
             "./openjp2.dll",
             "./swresample-3.dll",
             "./swscale-5.dll",
+            "./ucrtbase.dll",
+            "./vccorlib140.dll",
+            "./vcruntime140.dll",
             "./xin265_32.dll",
             // 将node_moduels里xy-electron-sdk包中的node包复制到resources目录上，方便打包调用
             {

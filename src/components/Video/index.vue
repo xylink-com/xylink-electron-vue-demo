@@ -62,45 +62,23 @@ export default {
       },
       deep: true,
     },
-    sourceIdAndStateChange: {
-      handler(newData) {
-        this.render(newData);
+    "item.sourceId": {
+      handler(newSourceId, previewSourceId) {
+        if (newSourceId !== previewSourceId) {
+          this.render({ sourceId: newSourceId });
+        }
       },
       deep: true,
     },
   },
   mounted() {
-    const { position, roster, sourceId } = this.item;
+    const { position, sourceId } = this.item;
     this.$refs.videoRef.width = position.width;
     this.$refs.videoRef.height = position.height;
 
-    // get video renderer
-    this.videoRender = this.xyRTC.getRender(this.$refs.videoRef);
-    this.videoRenderTimmer = null;
-
-    this.render({
-      sourceId,
-      state: roster.state,
-      type: "mounted",
-    });
-  },
-  destroyed() {
-    if (this.videoRenderTimmer) {
-      cancelAnimationFrame(this.videoRenderTimmer);
-      this.videoRenderTimmer = null;
-    }
+    this.render({ sourceId });
   },
   computed: {
-    // listener sourceId and state change, then rerender
-    sourceIdAndStateChange() {
-      const { roster, sourceId } = this.item;
-
-      return {
-        sourceId,
-        state: roster.state,
-        type: "computed",
-      };
-    },
     // calcaulate video status
     status() {
       const { state = 0 } = this.item.roster;
@@ -129,28 +107,11 @@ export default {
     },
   },
   methods: {
+    // sourceId变化时，需要重新执行setVideoRender方法
     render(data) {
-      const { isContent } = this.item.roster;
-      const { sourceId, state } = data;
+      const { sourceId } = data;
 
-      // render function
-      const renderLoop = () => {
-        // frame video frame
-        this.xyRTC.drawVideoFrame(this.videoRender, sourceId, isContent);
-
-        this.videoRenderTimmer = window.requestAnimationFrame(renderLoop);
-      };
-
-      // start first frame
-      if (sourceId && !this.videoRenderTimmer) {
-        this.videoRenderTimmer = window.requestAnimationFrame(renderLoop);
-      }
-
-      // if video status not equeal 5(can draw), stop timmer
-      if ((!sourceId && this.videoRenderTimmer) || state !== 5) {
-        cancelAnimationFrame(this.videoRenderTimmer);
-        this.videoRenderTimmer = null;
-      }
+      this.xyRTC.setVideoRender(sourceId, this.$refs.videoRef);
     },
   },
 };

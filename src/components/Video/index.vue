@@ -53,7 +53,7 @@
 <script>
 export default {
   name: "Video",
-  props: ["index", "width", "height", "item", "xyRTC"],
+  props: ["item", "xyRTC"],
   watch: {
     "item.position": {
       handler(newPosition) {

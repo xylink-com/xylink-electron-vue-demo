@@ -344,6 +344,10 @@ export default {
 
       this.shareContentStatus = e;
     });
+
+    xyRTC.on("ConfControl", (e) => {
+      console.log("ConfControl message: ", e);
+    });
   },
   methods: {
     logout() {

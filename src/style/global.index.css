@@ -25,6 +25,14 @@ h2,
 h3,
 p {
   margin: 0;
+  font-weight: 500;
+}
+
+*,
+*::before,
+*::after {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 .container {
@@ -236,7 +244,7 @@ input {
 
 .meeting-footer .middle .button {
   margin: 0;
-  width: 80px;
+  width: 85px;
 }
 
 .meeting-footer .button {
@@ -249,6 +257,7 @@ input {
   align-items: center;
   cursor: pointer;
   position: relative;
+  box-sizing: border-box;
 
   transition: all ease 0.3s;
 }
@@ -384,7 +393,7 @@ input {
   position: absolute;
   bottom: -18px;
   transform: translateY(-0%);
-  transition: transform ease 0.1s;
+  transition: transform ease 0.3s;
 }
 
 .meeting-footer .mic_aec:hover .icon {
@@ -446,6 +455,6 @@ input {
   color: #999;
 }
 
-.xy__setting-dialog {
+.xy__setting-dialog{
   width: 500px;
 }

@@ -7,8 +7,9 @@
         :value="proxy"
         :deviceChangeType="deviceChangeType"
         @Cancel="toggleProxyModal"
-        @Ok="settingProxy"
+        @Ok="onSettingProxy"
       />
+
       <div>
         <div class="login">
           <span class="version">version: {{ version }}</span>
@@ -116,7 +117,6 @@
             <Video
               v-for="val in layoutList"
               :key="val.key"
-              :index="val.key"
               :item="val"
               :xyRTC="xyRTC"
             ></Video>
@@ -171,6 +171,11 @@
 
               <div class="title">{{ audioStatus.status }}</div>
             </div>
+
+            <div @click="toggleProxyModal" class="button setting">
+              <div class="icon"></div>
+              <div class="title">设置</div>
+            </div>
           </div>
           <div class="right">
             <div class="button end_call" @click="hangup">
@@ -197,7 +202,6 @@ import Video from "./components/Video/index.vue";
 import SettingModal from "./components/Modal/index.vue";
 
 const store = new Store();
-let xyRTC;
 
 const message = {
   info: (message) => {
@@ -226,12 +230,19 @@ export default {
       proxy,
       visible: false,
       info: store.get("xyUserInfo") || USER_INFO,
+      xyRTC: null,
       screenInfo: {
         layoutWidth: 0,
         layoutHeight: 0,
       },
       // xyLogin/externalLogin/logined/calling/meeting
       status: "externalLogin",
+      layout: [],
+      audio: "unmute",
+      video: "unmuteVideo",
+      disableAudio: false,
+      shareContentStatus: 0,
+      setting: false,
       model: MODEL,
       modelList: [
         {
@@ -243,12 +254,6 @@ export default {
           label: "自定义布局",
         },
       ],
-      layout: [],
-      audio: "unmute",
-      video: "unmuteVideo",
-      disableAudio: false,
-      shareContentStatus: 0,
-      setting: false,
       micLevel: 0,
       deviceChangeType: "",
       pageInfo: defaultPageInfo,
@@ -261,9 +266,6 @@ export default {
     };
   },
   computed: {
-    xyRTC() {
-      return xyRTC;
-    },
     layoutList() {
       const newLayoutList = this.layout.map((val) => {
         const { isContent, callUri } = val.roster;
@@ -321,17 +323,17 @@ export default {
     },
   },
   mounted() {
-    xyRTC = XYRTC.getXYInstance({
+    this.xyRTC = XYRTC.getXYInstance({
       httpProxy: proxy,
       model: this.model,
     });
 
-    const version = xyRTC.getVersion();
+    const version = this.xyRTC.getVersion();
 
     this.version = version;
 
     // call status event
-    xyRTC.on("CallState", (e) => {
+    this.xyRTC.on("CallState", (e) => {
       const { state, reason } = e;
 
       if (state === "Connected") {
@@ -350,7 +352,7 @@ export default {
     });
 
     // login status event
-    xyRTC.on("LoginState", (e) => {
+    this.xyRTC.on("LoginState", (e) => {
       if (e.state === "Logined") {
         message.info("登录成功");
 
@@ -369,7 +371,7 @@ export default {
     });
 
     // video streams change event
-    xyRTC.on("VideoStreams", (e) => {
+    this.xyRTC.on("VideoStreams", (e) => {
       if (this.model === "custom") {
         // 每次推送都会携带local数据，如果分页不需要展示，则移除local数据
         if (this.cachePageInfo.currentPage !== 0) {
@@ -384,20 +386,17 @@ export default {
 
         const nextTemplateRate = TEMPLATE.GALLERY.rate[e.length] || 0.5625;
         // 此处无id是container的容器，则使用document.body的size计算screen
-        this.cacheScreenInfo = getScreenInfo("container", nextTemplateRate, [
-          92,
-          0,
-        ]);
+        this.cacheScreenInfo = getScreenInfo("app", nextTemplateRate, [92, 0]);
 
         const nextLayout = this.calculateBaseLayoutList(e);
-        
+
         this.layout = nextLayout;
       } else {
         this.layout = cloneDeep(e);
       }
     });
 
-    xyRTC.on("KickOut", (e) => {
+    this.xyRTC.on("KickOut", (e) => {
       console.log("demo get kick out message: ", e);
       const errorMap = {
         4000: "多个重复长连接建立",
@@ -411,12 +410,12 @@ export default {
     });
 
     // screen size change event
-    xyRTC.on("ScreenInfo", (e) => {
+    this.xyRTC.on("ScreenInfo", (e) => {
       this.screenInfo = e;
     });
 
     // content status event
-    xyRTC.on("ContentState", (e) => {
+    this.xyRTC.on("ContentState", (e) => {
       if (e === 1) {
         message.info(`您正在分享Content内容`);
       } else if (e === 0) {
@@ -427,19 +426,20 @@ export default {
     });
 
     // 实时获取麦克风声量大小（0-100）
-    xyRTC.on("MicEnergyReported", (value) => {
+    this.xyRTC.on("MicEnergyReported", (value) => {
       this.micLevel = value;
     });
 
     // 麦克风/摄像头设备变化事件
-    xyRTC.on("MediaDeviceEvent", (value) => {
+    this.xyRTC.on("MediaDeviceEvent", (value) => {
+      console.log("device change type:", value);
       this.deviceChangeType = value;
     });
 
     // 会议控制消息
     // 可以通过此消息获取：会控播放地址/主会场callUri/麦克风状态/是否是强制静音麦克风
     // 自定义布局模式下，主会场callUri需要记录下来，后续requestLayout计算需要使用
-    xyRTC.on("ConfControl", (e) => {
+    this.xyRTC.on("ConfControl", (e) => {
       console.log("metting control message: ", e);
 
       const { disableMute, muteMic } = e;
@@ -452,7 +452,7 @@ export default {
     });
 
     // 会议信息发生变化，会推送此消息，开始计算请求layout
-    xyRTC.on("ConfInfoChanged", (e) => {
+    this.xyRTC.on("ConfInfoChanged", (e) => {
       console.log("react conf info change:", e);
 
       if (this.model === "auto") {
@@ -490,13 +490,13 @@ export default {
   },
   methods: {
     logout() {
-      xyRTC.logout();
+      this.xyRTC.logout();
     },
-    settingProxy() {
-      store.set("xyHttpProxy", this.proxy);
-      ipcRenderer.send("relaunch", this.proxy);
+    onSettingProxy(value) {
+      store.set("xyHttpProxy", value);
+      ipcRenderer.send("relaunch", proxy);
 
-      this.visible = false;
+      this.toggleProxyModal();
     },
     toggleProxyModal() {
       this.visible = !this.visible;
@@ -504,10 +504,10 @@ export default {
     externalLogin() {
       const { extID, extUserId, displayName } = this.info;
 
-      xyRTC.loginExternalAccount(extID, extUserId, displayName);
+      this.xyRTC.loginExternalAccount(extID, extUserId, displayName);
     },
     onLogout() {
-      xyRTC.logout();
+      this.xyRTC.logout();
     },
     makeCall() {
       // 登录&连接服务器成功，可以入会
@@ -518,7 +518,7 @@ export default {
         return;
       }
 
-      const result = xyRTC.makeCall(meeting, meetingPassword, meetingName);
+      const result = this.xyRTC.makeCall(meeting, meetingPassword, meetingName);
 
       if (result.code === 3002) {
         message.info("请登录后发起呼叫");
@@ -531,36 +531,47 @@ export default {
       this.video = "unmuteVideo";
       this.status = "logined";
 
-      xyRTC.endCall();
+      this.xyRTC.endCall();
     },
-    switchLayout() {
-      xyRTC.switchLayout();
+    async switchLayout() {
+      try {
+        const result = await this.xyRTC.switchLayout();
+
+        console.log("result: ", result);
+      } catch (err) {
+        console.log("err: ", err);
+        message.info(err?.msg || "切换失败");
+      }
     },
     stopShareContent() {
-      xyRTC.stopSendContent();
+      this.xyRTC.stopSendContent();
     },
     shareContent() {
-      xyRTC.startSendContent();
+      this.xyRTC.startSendContent();
     },
     audioOperate() {
+      if (this.audio === "mute" && this.disableAudio) {
+        return;
+      }
+
       if (this.audio === "unmute") {
         this.audio = "mute";
         message.info("麦克风已静音");
 
-        xyRTC.muteMic(true);
+        this.xyRTC.muteMic(true);
       } else {
         this.audio = "unmute";
-        xyRTC.muteMic(false);
+        this.xyRTC.muteMic(false);
       }
     },
     videoOperate() {
       if (this.video === "unmuteVideo") {
         this.video = "muteVideo";
 
-        xyRTC.muteCamera(true);
+        this.xyRTC.muteCamera(true);
       } else {
         this.video = "unmuteVideo";
-        xyRTC.muteCamera(false);
+        this.xyRTC.muteCamera(false);
       }
     },
     switchModel(val) {
@@ -683,7 +694,7 @@ export default {
       // 更新页码信息
       this.pageInfo = { ...this.cachePageInfo };
 
-      xyRTC.requestLayout(reqList, maxSize, currentPage);
+      this.xyRTC.requestLayout(reqList, maxSize, currentPage);
     },
     switchPage(type) {
       console.log("cachePageInfo: ", this.cachePageInfo);

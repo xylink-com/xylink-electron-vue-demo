@@ -31,15 +31,14 @@
         <el-select
           :style="{ width: '300px' }"
           v-model="selectedDevice.camera"
-          @select="onSelectCamera"
+          @change="onSelectCamera"
         >
           <el-option
             v-for="item in cameraList"
             :key="item.devId"
             :value="item.devId"
-          >
-            {{ item.devName }}
-          </el-option>
+            :label="item.devName"
+          />
         </el-select>
       </el-col>
     </el-row>
@@ -52,15 +51,14 @@
         <el-select
           :style="{ width: '300px' }"
           v-model="selectedDevice.microphone"
-          @select="onSelectMicrophone"
+          @change="onSelectMicrophone"
         >
           <el-option
             v-for="item in microphoneList"
             :key="item.devId"
             :value="item.devId"
-          >
-            {{ item.devName }}
-          </el-option>
+            :label="item.devName"
+          />
         </el-select>
       </el-col>
     </el-row>
@@ -73,23 +71,17 @@
         <el-select
           :style="{ width: '300px' }"
           v-model="selectedDevice.speaker"
-          @select="onSelectSpeaker"
+          @change="onSelectSpeaker"
         >
           <el-option
             v-for="item in speakerList"
             :key="item.devId"
             :value="item.devId"
-          >
-            {{ item.devName }}
-          </el-option>
+            :label="item.devName"
+          />
         </el-select>
       </el-col>
     </el-row>
-
-    <div class="dialog-footer">
-      <el-button @click="handleCancel">取消</el-button>
-      <el-button type="primary" @click="handleOk">确定</el-button>
-    </div>
   </el-dialog>
 </template>
 <script>
@@ -137,7 +129,7 @@ export default {
       }
 
       const camera = await this.xyRTC.getDeviceList("camera");
-    
+
       const selectedId = this.updateSelectedDevice(camera);
 
       this.cameraList = camera;
@@ -253,17 +245,30 @@ export default {
         speaker: val,
       };
 
+      console.log("onSelectSpeaker:::::", val);
+
       this.onSwitchSpeaker(val);
     },
   },
   watch: {
-    visible:{
-      handler(newValue){
-        if(newValue){
+    visible: {
+      handler(newValue) {
+        if (newValue) {
           this.updateDevices();
         }
+      },
+    },
+    async deviceChangeType(newValue) {
+      if (newValue === "camera") {
+        await this.updateCameraDevices();
+      } else if (newValue === "microphone") {
+        await this.updateMicrophoneDevices();
+      } else if (newValue === "speaker") {
+        await this.updateSpeakerDevices();
       }
-    }
+
+      this.selectedDevice = this.selectedDeviceRef;
+    },
   },
 };
 </script>

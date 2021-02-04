@@ -1,36 +1,35 @@
 <template>
   <div id="app">
     <div class="container">
-      <el-dialog
-        title="修改代理"
+      <SettingModal
         :visible="visible"
-        width="350"
-        :before-close="toggleProxyModal"
-      >
-        <el-row class="xy-row">
-          <el-input
-            class="text"
-            placeholder="Input Proxy..."
-            v-model="proxy"
-            clearable
-          ></el-input>
-        </el-row>
-        <div class="dialog-footer">
-          <el-button @click="toggleProxyModal">取消</el-button>
-          <el-button type="primary" @click="settingProxy">确定</el-button>
-        </div>
-      </el-dialog>
-
+        :xyRTC="xyRTC"
+        :value="proxy"
+        :deviceChangeType="deviceChangeType"
+        @Cancel="toggleProxyModal"
+        @Ok="settingProxy"
+      />
       <div>
         <div class="login">
           <span class="version">version: {{ version }}</span>
           <h1 class="xy__demo-title">XY ELECTRON DEV</h1>
-          <h3 class="xy__demo-title">
-            <span>{{ env }} 环境</span>
-            <span @click="toggleProxyModal" class="xy_setting">
-              [设置]
-            </span>
-          </h3>
+          <div class="xy__demo-line">
+            <div>
+              <span>{{ env }} 环境</span>
+              <span @click="toggleProxyModal" class="xy_setting"> [设置] </span>
+            </div>
+            <div :style="{ marginLeft: '20px' }">
+              <span>布局模式：</span>
+              <el-select v-model="model" @change="switchModel">
+                <el-option
+                  v-for="item in modelList"
+                  :value="item.value"
+                  :key="item.value"
+                  :label="item.label"
+                />
+              </el-select>
+            </div>
+          </div>
 
           <el-row v-if="status === 'externalLogin'">
             <el-input
@@ -126,6 +125,16 @@
 
         <div class="meeting-footer">
           <div class="middle">
+            <div @click="switchPage('previous')" class="button layout">
+              <div className="icon"></div>
+              <div className="title">上一页（{{ pageInfo.currentPage }}）</div>
+            </div>
+
+            <div @click="switchPage('next')" class="button layout">
+              <div class="icon"></div>
+              <div class="title">下一页</div>
+            </div>
+
             <div @click="switchLayout" class="button layout">
               <div class="icon"></div>
               <div class="title">窗口布局</div>
@@ -154,7 +163,10 @@
             <div @click="audioOperate" :class="audioStatus.className">
               <div class="icon"></div>
               <div class="aec" v-if="audio === 'unmute'">
-                <div class="aec_content" style="transform: translateY(-0%)" />
+                <div
+                  class="aec_content"
+                  :style="{ transform: `translateY(-${micLevel}%)` }"
+                />
               </div>
 
               <div class="title">{{ audioStatus.status }}</div>
@@ -177,9 +189,12 @@ import { XYRTC } from "@xylink/xy-electron-sdk";
 import Store from "electron-store";
 import { ipcRenderer } from "electron";
 import { USER_INFO, DEFAULT_PROXY } from "./utils/enum";
+import { TEMPLATE } from "./utils/template";
+import { getScreenInfo } from "./utils/index";
 import { Message } from "element-ui";
 import cloneDeep from "clone-deep";
 import Video from "./components/Video/index.vue";
+import SettingModal from "./components/Modal/index.vue";
 
 const store = new Store();
 let xyRTC;
@@ -191,10 +206,19 @@ const message = {
 };
 const proxy = store.get("xyHttpProxy") || DEFAULT_PROXY;
 const env = String(proxy).split(".")[0] || "cloud";
+const MODEL = store.get("xyLayoutModel") || "custom";
+
+const maxSize = 4;
+const defaultPageInfo = {
+  currentPage: 0,
+  // 建议每页请求8位以下的数据，如果设定的值大于8位，那么SDK会自动截断至8位
+  totalPage: 0,
+  maxSize,
+};
 
 export default {
   name: "App",
-  components: { Video },
+  components: { Video, SettingModal },
   data() {
     return {
       version: "",
@@ -208,12 +232,32 @@ export default {
       },
       // xyLogin/externalLogin/logined/calling/meeting
       status: "externalLogin",
+      model: MODEL,
+      modelList: [
+        {
+          value: "auto",
+          label: "自动布局",
+        },
+        {
+          value: "custom",
+          label: "自定义布局",
+        },
+      ],
       layout: [],
       audio: "unmute",
       video: "unmuteVideo",
       disableAudio: false,
       shareContentStatus: 0,
       setting: false,
+      micLevel: 0,
+      deviceChangeType: "",
+      pageInfo: defaultPageInfo,
+      cachePageInfo: defaultPageInfo,
+      cacheConfInfo: {
+        contentPartCount: 0,
+        participantCount: 0,
+        chairManUrl: "",
+      },
     };
   },
   computed: {
@@ -279,7 +323,7 @@ export default {
   mounted() {
     xyRTC = XYRTC.getXYInstance({
       httpProxy: proxy,
-      model: "auto",
+      model: this.model,
     });
 
     const version = xyRTC.getVersion();
@@ -326,7 +370,44 @@ export default {
 
     // video streams change event
     xyRTC.on("VideoStreams", (e) => {
-      this.layout = cloneDeep(e);
+      if (this.model === "custom") {
+        // 每次推送都会携带local数据，如果分页不需要展示，则移除local数据
+        if (this.cachePageInfo.currentPage !== 0) {
+          const localIndex = e.findIndex(
+            (item) => item.sourceId === "LocalPreviewID"
+          );
+
+          if (localIndex >= 0) {
+            e.splice(localIndex, 1);
+          }
+        }
+
+        const nextTemplateRate = TEMPLATE.GALLERY.rate[e.length] || 0.5625;
+        // 此处无id是container的容器，则使用document.body的size计算screen
+        this.cacheScreenInfo = getScreenInfo("container", nextTemplateRate, [
+          92,
+          0,
+        ]);
+
+        const nextLayout = this.calculateBaseLayoutList(e);
+        
+        this.layout = nextLayout;
+      } else {
+        this.layout = cloneDeep(e);
+      }
+    });
+
+    xyRTC.on("KickOut", (e) => {
+      console.log("demo get kick out message: ", e);
+      const errorMap = {
+        4000: "多个重复长连接建立",
+        4001: "用户在另一台设备登录",
+        4003: "登录过期",
+      };
+
+      this.onLogout();
+
+      message.info(`账号异常：${errorMap[e] || "未知异常，重新登录"}`);
     });
 
     // screen size change event
@@ -343,6 +424,68 @@ export default {
       }
 
       this.shareContentStatus = e;
+    });
+
+    // 实时获取麦克风声量大小（0-100）
+    xyRTC.on("MicEnergyReported", (value) => {
+      this.micLevel = value;
+    });
+
+    // 麦克风/摄像头设备变化事件
+    xyRTC.on("MediaDeviceEvent", (value) => {
+      this.deviceChangeType = value;
+    });
+
+    // 会议控制消息
+    // 可以通过此消息获取：会控播放地址/主会场callUri/麦克风状态/是否是强制静音麦克风
+    // 自定义布局模式下，主会场callUri需要记录下来，后续requestLayout计算需要使用
+    xyRTC.on("ConfControl", (e) => {
+      console.log("metting control message: ", e);
+
+      const { disableMute, muteMic } = e;
+      this.disableAudio = disableMute;
+      if (muteMic === "mute") {
+        this.audio = "mute";
+      } else if (muteMic === "unmute") {
+        this.audio = "unmute";
+      }
+    });
+
+    // 会议信息发生变化，会推送此消息，开始计算请求layout
+    xyRTC.on("ConfInfoChanged", (e) => {
+      console.log("react conf info change:", e);
+
+      if (this.model === "auto") {
+        // 自动布局内部计算了layout请流，不需要外部处理
+        return;
+      }
+
+      const { participantCount, contentPartCount } = e;
+      this.cacheConfInfo = e;
+
+      const { maxSize } = this.cachePageInfo;
+      // 会议产生变动，那么就重新计算总页数
+      // participantCount + contentPartCount 代表people + content的总个数
+      let totalPage = Math.ceil(
+        (participantCount + contentPartCount) / maxSize
+      );
+      totalPage = totalPage > 0 ? totalPage : 0;
+
+      const nextPageInfo = { ...this.cachePageInfo };
+
+      nextPageInfo.totalPage = totalPage;
+
+      // 如果当前的页码大于最新最大的页码，就更新到最后一页
+      if (nextPageInfo.currentPage > totalPage) {
+        nextPageInfo.currentPage = totalPage;
+      }
+
+      console.log("next page info: ", nextPageInfo);
+
+      // 缓存页码信息
+      this.cachePageInfo = nextPageInfo;
+
+      this.startRequestLayout();
     });
   },
   methods: {
@@ -420,6 +563,169 @@ export default {
         xyRTC.muteCamera(false);
       }
     },
+    switchModel(val) {
+      console.log("val: ", val);
+      store.set("xyLayoutModel", val);
+      this.model = val;
+      ipcRenderer.send("relaunch", val);
+    },
+    calculateBaseLayoutList(list) {
+      const { rateHeight, rateWidth } = this.cacheScreenInfo;
+
+      this.screenInfo = {
+        layoutHeight: rateHeight,
+        layoutWidth: rateWidth,
+      };
+
+      let positionStyle = {
+        left: "0px",
+        top: "0px",
+        width: "0px",
+        height: "0px",
+      };
+      const positionInfo = TEMPLATE.GALLERY.temp[list.length];
+
+      const layoutList = list.map((item, index) => {
+        const [x, y, w, h] = positionInfo[index].position;
+        let layoutX = Math.round(rateWidth * x);
+        let layoutY = Math.round(rateHeight * y);
+        let layoutWidth = Math.round(rateWidth * w);
+        let layoutHeight = Math.round(rateHeight * h);
+
+        positionStyle = {
+          left: `${layoutX}px`,
+          top: `${layoutY}px`,
+          width: `${layoutWidth}px`,
+          height: `${layoutHeight}px`,
+        };
+
+        const position = {
+          width: layoutWidth,
+          height: layoutHeight,
+        };
+
+        return { ...item, positionStyle, position };
+      });
+
+      return layoutList;
+    },
+    startRequestLayout() {
+      console.log("request layout cacheConfInfo: ", this.cacheConfInfo);
+
+      // resolution: 0:90, 1: 180, 2:360, 3: 720, 4: 1080
+      // quality: 0: low, 1: normal, 2: high
+      const {
+        contentPartCount = 0,
+        participantCount = 0,
+        chairManUrl = "",
+      } = this.cacheConfInfo;
+      const { maxSize, currentPage } = this.cachePageInfo;
+      const reqList = [];
+      // 存在主会场，那么需要指定callUri字段
+      // 如果有content，那么content会上大屏，分辨率请高一些
+      // 如果无content，那么content可以请高分辨率的
+      // 第0页请求主会场数据，其他分页数据请求people数据
+      if (chairManUrl && currentPage === 0) {
+        reqList.push({
+          isContent: false,
+          callUri: chairManUrl,
+          resolution: contentPartCount ? 2 : 3,
+          quality: 1,
+        });
+      }
+
+      // 如果有分享content，那么就请高分辨率的content画面
+      // callUri可以无需指定
+      if (contentPartCount > 0 && currentPage === 0) {
+        reqList.push({
+          isContent: true,
+          callUri: "",
+          resolution: 4,
+          quality: 2,
+        });
+      }
+
+      // 如果participantCount的数据大于0，则说明会中有participantCount个人
+      // 那么就基于participantCount来做分页请流
+      // requestLayout需要指定三个参数：
+      // @param reqList 请流列表
+      // @param maxViewCount 每页最多可请求多少数据流，最大可设定位8位
+      // @param pageIndex：页码，指定请求第几页数据
+      if (participantCount > 0) {
+        // 第0页和第1页是相同的数据，请求保持一致
+        const page = currentPage - 1 <= 0 ? 0 : currentPage - 1;
+        let i = page * maxSize;
+        let endSize = (page + 1) * maxSize;
+        // 如果最大的size大于成员总数，那么就以成员总数为结尾
+        let realSize = participantCount >= endSize ? endSize : participantCount;
+
+        for (i; i < realSize; i++) {
+          if (reqList.length === 0 && currentPage === 0) {
+            reqList.push({
+              isContent: false,
+              callUri: "",
+              resolution: 3,
+              quality: 1,
+            });
+          } else {
+            reqList.push({
+              isContent: false,
+              callUri: "",
+              resolution: 1,
+              quality: 0,
+            });
+          }
+        }
+      }
+
+      console.log("custom request layout: ", reqList);
+
+      // 更新页码信息
+      this.pageInfo = { ...this.cachePageInfo };
+
+      xyRTC.requestLayout(reqList, maxSize, currentPage);
+    },
+    switchPage(type) {
+      console.log("cachePageInfo: ", this.cachePageInfo);
+      const { currentPage, totalPage } = this.cachePageInfo;
+      let nextPage = currentPage;
+
+      if (this.model === "auto") {
+        message.info("自动布局不支持分页显示");
+        return;
+      }
+
+      if (this.shareContentStatus === 1) {
+        message.info("正在分享content，不允许分页");
+        return;
+      }
+
+      if (type === "next") {
+        if (currentPage + 1 > totalPage) {
+          message.info("已经在最后一页啦");
+          return;
+        } else {
+          nextPage = currentPage + 1;
+        }
+
+        // 缓存页码信息
+        this.cachePageInfo.currentPage = nextPage;
+      } else if (type === "previous") {
+        if (currentPage - 1 < 0) {
+          message.info("已经在首页啦");
+          return;
+        } else {
+          nextPage = currentPage - 1;
+        }
+
+        // 缓存页码信息
+        this.cachePageInfo.currentPage = nextPage;
+      }
+
+      console.log("switch paage: ", this.cachePageInfo);
+
+      this.startRequestLayout();
+    },
   },
   watch: {
     info: {
@@ -442,8 +748,8 @@ export default {
   margin: 0;
 }
 
-.el-row .text,
-.xy-row .text {
+.login .el-row .text,
+.login .xy-row .text {
   margin-bottom: 15px;
 }
 

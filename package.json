@@ -27,7 +27,7 @@
     "@vue/cli-plugin-eslint": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
     "@vue/compiler-sfc": "^3.0.0-0",
-    "@xylink/xy-electron-sdk": "^0.1.1-beta.0",
+    "@xylink/xy-electron-sdk": "0.1.5",
     "babel-eslint": "^10.1.0",
     "clone-deep": "^4.0.1",
     "cross-env": "^7.0.2",

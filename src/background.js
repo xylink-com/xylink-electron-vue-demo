@@ -1,15 +1,29 @@
 "use strict";
 
-import { app, protocol, BrowserWindow, ipcMain } from "electron";
+import {
+  app,
+  protocol,
+  BrowserWindow,
+  Menu,
+  globalShortcut,
+  ipcMain,
+  screen,
+  webContents,
+} from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
-// import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
+import * as path from "path";
+import { format as formatUrl } from "url";
+
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let win;
+// 必须提前定义好，存储视频流数据
+global.sharedObject = {
+  videoFrames: {},
+};
 
-// Scheme must be registered before the app is ready
+let win;
+let externalWindow;
+
 protocol.registerSchemesAsPrivileged([
   { scheme: "app", privileges: { secure: true, standard: true } },
 ]);
@@ -19,24 +33,20 @@ function createWindow() {
     "process.env.ELECTRON_NODE_INTEGRATION: ",
     process.env.ELECTRON_NODE_INTEGRATION
   );
-  // Create the browser window.
+
   win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      // Use pluginOptions.nodeIntegration, leave this alone
-      // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
     },
   });
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
-    // Load the url of the dev server if in development mode
     win.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
     if (!process.env.IS_TEST) win.webContents.openDevTools();
   } else {
     createProtocol("app");
-    // Load the index.html when not in development
     win.loadURL("app://./index.html");
   }
 
@@ -48,6 +58,97 @@ function createWindow() {
     if (arg) {
       app.relaunch();
       app.exit(0);
+    }
+  });
+
+  ipcMain.on("externelLayout", (event, msg) => {
+    if (msg && externalWindow) {
+      externalWindow.webContents.send("externelLayout", msg);
+    }
+  });
+
+  ipcMain.on("closeExternalWindow", (event, msg) => {
+    if (msg) {
+      externalWindow && externalWindow.close();
+    }
+  });
+
+  ipcMain.on("ScreenInfo", (event, msg) => {
+    if (msg && externalWindow) {
+      externalWindow.webContents.send("ScreenInfo", msg);
+    }
+  });
+
+  ipcMain.on("set-video-frame", (event, msg) => {
+    if (msg && externalWindow) {
+      externalWindow.webContents.send("set-video-frame", msg);
+    }
+  });
+
+  // 打开外接屏
+  ipcMain.on("openWindow", (event, arg) => {
+    if (arg) {
+      const displays = screen.getAllDisplays();
+
+      const externalDispaly = displays.find((display) => {
+        return display.bounds.x !== 0 || display.bounds.y !== 0;
+      });
+
+      console.log("args: ", arg);
+      console.log("displays: ", displays);
+      console.log("externalDispaly: ", externalDispaly);
+
+      if (externalWindow) {
+        externalWindow.close();
+      }
+
+      if (externalDispaly) {
+        externalWindow = new BrowserWindow({
+          x: externalDispaly.bounds.x + 50,
+          y: externalDispaly.bounds.y + 50,
+          width: 1000,
+          height: 660,
+          backgroundColor: "#fff",
+          titleBarStyle: "hidden",
+          webPreferences: { nodeIntegration: true, enableRemoteModule: true },
+          title: "小鱼Electron 外接屏幕",
+          icon: path.join(__static, "logo.png"),
+        });
+
+        if (isDevelopment) {
+          externalWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL + "#/external");
+          if (!process.env.IS_TEST) externalWindow.webContents.openDevTools();
+
+        } else {
+          externalWindow.loadURL(
+            formatUrl({
+              pathname: path.join(__dirname, "index.html"),
+              protocol: "file",
+              slashes: false,
+              hash: "externel",
+            })
+          );
+        }
+
+        // 监听页面是否加载完成，完成之后则开始进行数据的传递
+        externalWindow.webContents.on("did-finish-load", () => {
+          win.webContents.send("domReady", true);
+        });
+
+        externalWindow.once("ready-to-show", () => {
+          externalWindow.show();
+        });
+
+        externalWindow.on("closed", () => {
+          externalWindow = null;
+
+          if (win) {
+            win.webContents.send("closedExternalWindow", true);
+          }
+        });
+      } else {
+        win.webContents.send("secondWindow", false);
+      }
     }
   });
 }

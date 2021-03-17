@@ -19,7 +19,8 @@
   "dependencies": {
     "core-js": "^3.6.5",
     "element-ui": "^2.13.2",
-    "vue": "^2.6.12"
+    "vue": "^2.6.12",
+    "vue-router": "^3.5.1"
   },
   "devDependencies": {
     "@types/electron-devtools-installer": "^2.2.0",
@@ -27,7 +28,7 @@
     "@vue/cli-plugin-eslint": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
     "@vue/compiler-sfc": "^3.0.0-0",
-    "@xylink/xy-electron-sdk": "0.1.5",
+    "@xylink/xy-electron-sdk": "0.1.13-beta.2",
     "babel-eslint": "^10.1.0",
     "clone-deep": "^4.0.1",
     "cross-env": "^7.0.2",

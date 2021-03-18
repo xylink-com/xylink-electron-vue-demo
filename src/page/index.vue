@@ -404,7 +404,7 @@ export default {
         this.layout = cloneDeep(e);
       }
 
-      ipcRenderer.send("externelLayout", {
+      ipcRenderer.send("externalLayout", {
         layout: this.layout,
       });
     });
@@ -779,7 +779,7 @@ export default {
             // 关闭原始屏的视频流渲染
             this.xyRTC.stopAllVideoRender();
 
-            ipcRenderer.send("externelLayout", {
+            ipcRenderer.send("externalLayout", {
               layout: this.layout,
             });
 
@@ -787,7 +787,7 @@ export default {
             this.xyRTC.startExternal(({ sourceId, videoFrame }) => {
               if (videoFrame && videoFrame.hasData) {
                 const temp = remote.getGlobal("sharedObject").videoFrames;
-                
+
                 if (temp[sourceId]) {
                   remote.getGlobal("sharedObject").videoFrames[
                     sourceId

@@ -51,9 +51,17 @@
 </template>
 
 <script>
+import { remote } from "electron";
+import { Render, xyTimer } from "@xylink/xy-electron-sdk";
+
 export default {
   name: "Video",
-  props: ["item", "xyRTC"],
+  props: ["item", "xyRTC", "renderMap", "isExternal"],
+  data() {
+    return {
+      videoRenderTimmer: 0, // 视频流渲染定时器
+    };
+  },
   watch: {
     "item.position": {
       handler(newPosition) {
@@ -64,8 +72,19 @@ export default {
     },
     "item.sourceId": {
       handler(newSourceId, previewSourceId) {
-        if (newSourceId !== previewSourceId) {
+        if (this.isExternal) {
+          // 建立自己的render，有可能sourceId第一次没有值，需要再次调用此方法，确保有对应的render
+          this.setRender(newSourceId);
+        } else if (newSourceId !== previewSourceId) {
           this.render({ sourceId: newSourceId });
+        }
+      },
+      deep: true,
+    },
+    item: {
+      handler(newItem) {
+        if (this.isExternal) {
+          this.externalRender(newItem);
         }
       },
       deep: true,
@@ -76,7 +95,14 @@ export default {
     this.$refs.videoRef.width = position.width;
     this.$refs.videoRef.height = position.height;
 
-    this.render({ sourceId });
+    if (this.isExternal) {
+      // 建立自己的render。
+      this.setRender(sourceId);
+      // 开始渲染
+      this.externalRender(this.item);
+    } else {
+      this.render({ sourceId });
+    }
   },
   computed: {
     // calcaulate video status
@@ -110,8 +136,62 @@ export default {
     // sourceId变化时，需要重新执行setVideoRender方法
     render(data) {
       const { sourceId } = data;
-
       this.xyRTC.setVideoRender(sourceId, this.$refs.videoRef);
+    },
+    // 建立自己的render
+    setRender(sourceId) {
+      if (sourceId && !this.renderMap.get(sourceId)) {
+        const render = new Render(this.$refs.videoRef);
+        this.renderMap.set(sourceId, render);
+      }
+    },
+    // 外接屏
+    externalRender(data) {
+      const { sourceId, roster } = data;
+      const { state } = roster;
+
+      if (sourceId && !this.videoRenderTimmer && state === 5) {
+        // 每秒30帧渲染
+        this.videoRenderTimmer = xyTimer.setInterval(
+          sourceId,
+          () => {
+            this.drawBySourceId(sourceId);
+          },
+          33.33
+        );
+      }
+
+      if ((!sourceId && this.videoRenderTimmer) || state !== 5) {
+        this.clearTimer();
+      }
+    },
+    // 外接屏 渲染
+    drawExternalVideoFrame(id, videoFrame) {
+      const render = this.renderMap.get(id);
+
+      if (render) {
+        render.draw(
+          videoFrame.buffer,
+          videoFrame.width,
+          videoFrame.height,
+          videoFrame.rotation
+        );
+      }
+    },
+    // 获取当前sourceId的videoFrame, 通过render进行渲染
+    drawBySourceId() {
+      const arr = Array.prototype.slice.call(arguments);
+      const sourceId = arr[0];
+      const videoFrame = remote.getGlobal("sharedObject").videoFrames[sourceId];
+
+      videoFrame?.hasData && this.drawExternalVideoFrame(sourceId, videoFrame);
+    },
+    // 清除videoRenderTimmer
+    clearTimer() {
+      if (this.videoRenderTimmer) {
+        xyTimer.clearInterval(this.videoRenderTimmer.key);
+        this.videoRenderTimmer = null;
+      }
     },
   },
 };

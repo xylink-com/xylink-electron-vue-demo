@@ -61,9 +61,9 @@ function createWindow() {
     }
   });
 
-  ipcMain.on("externelLayout", (event, msg) => {
+  ipcMain.on("externalLayout", (event, msg) => {
     if (msg && externalWindow) {
-      externalWindow.webContents.send("externelLayout", msg);
+      externalWindow.webContents.send("externalLayout", msg);
     }
   });
 
@@ -125,7 +125,7 @@ function createWindow() {
               pathname: path.join(__dirname, "index.html"),
               protocol: "file",
               slashes: false,
-              hash: "externel",
+              hash: "external",
             })
           );
         }

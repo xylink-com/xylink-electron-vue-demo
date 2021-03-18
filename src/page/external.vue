@@ -1,23 +1,23 @@
 <template>
   <div className="meeting-content">
     <div className="meeting-layout">
-      <ExternelVideo
+      <Video
         v-for="item in layoutList"
         :key="item.key"
         :item="item"
         :isExternal="true"
         :renderMap="renderMap"
-      ></ExternelVideo>
+      ></Video>
     </div>
   </div>
 </template>
 <script>
 import { ipcRenderer } from "electron";
-import ExternelVideo from "./components/ExternelVideo";
+import Video from "./components/Video";
 
 export default {
   name: "External",
-  components: { ExternelVideo },
+  components: { Video },
   computed: {
     layoutList() {
       const localLayout = this.layout;
@@ -47,7 +47,7 @@ export default {
   },
   mounted() {
     const _this = this;
-    ipcRenderer.on("externelLayout", function(event, msg) {
+    ipcRenderer.on("externalLayout", function(event, msg) {
       _this.layout = msg.layout;
     });
   },

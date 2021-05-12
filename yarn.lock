@@ -1673,10 +1673,10 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@xylink/xy-electron-sdk@0.1.13":
-  version "0.1.13"
-  resolved "https://registry.yarnpkg.com/@xylink/xy-electron-sdk/-/xy-electron-sdk-0.1.13.tgz#09a2fec07118dfb322246fb730de5aee36d38e58"
-  integrity sha512-3RFOeKv55AEvBKuxBdinGUATVr3uG3RImX3LGoSoMXt6Ty4HiHxux55QVcRiHE8fXLXFQZAk3kd3cpwd1jOX8w==
+"@xylink/xy-electron-sdk@0.1.15":
+  version "0.1.15"
+  resolved "https://registry.yarnpkg.com/@xylink/xy-electron-sdk/-/xy-electron-sdk-0.1.15.tgz#13063d90bb75e7174df6022fd3ac7cccae3da7a9"
+  integrity sha512-sNId4ksbJ42Le/vyfUgp2xU2rQc50EwLeGy7D68JzYnp2KJjTLxpZyotMkYVuQ9C0kgsNJDGhYdgeQyfRFslvw==
   dependencies:
     download "^8.0.0"
     just-scripts "^0.44.1"

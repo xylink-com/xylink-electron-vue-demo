@@ -39,6 +39,8 @@ function createWindow() {
     height: 600,
     webPreferences: {
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+      contextIsolation:false, 
+      enableRemoteModule:true
     },
   });
 
@@ -110,7 +112,7 @@ function createWindow() {
           height: 660,
           backgroundColor: "#fff",
           titleBarStyle: "hidden",
-          webPreferences: { nodeIntegration: true, enableRemoteModule: true },
+          webPreferences: { nodeIntegration: true, contextIsolation:false, enableRemoteModule:true },
           title: "小鱼Electron 外接屏幕",
           icon: path.join(__static, "logo.png"),
         });

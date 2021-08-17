@@ -79,6 +79,11 @@
               v-model="info.meetingName"
               clearable
             ></el-input>
+
+            <div class="text">
+              <el-checkbox v-model="info.muteVideo">入会时关闭摄像头</el-checkbox>
+              <el-checkbox v-model="info.muteAudio">入会时静音</el-checkbox>
+            </div>
             <div>
               <el-button class="xy__login-btn" type="primary" @click="makeCall"
                 >呼叫</el-button
@@ -121,6 +126,11 @@
               :xyRTC="xyRTC"
             ></Video>
           </div>
+
+           <Barrage v-if="subTitle.content && subTitle.action === 'push'" :subTitle = "subTitle"/>
+            
+          <InOutReminder :reminders = "inOutReminders"/>
+
         </div>
 
         <div class="meeting-footer">
@@ -206,6 +216,8 @@ import { Message } from "element-ui";
 import cloneDeep from "clone-deep";
 import Video from "./components/Video/index.vue";
 import SettingModal from "./components/Modal/index.vue";
+import InOutReminder from "./components/InOutReminder/index.vue";
+import Barrage from "./components/Barrage/index.vue"
 
 const store = new Store();
 
@@ -228,7 +240,7 @@ const defaultPageInfo = {
 
 export default {
   name: "App",
-  components: { Video, SettingModal },
+  components: { Video, SettingModal, Barrage, InOutReminder},
   data() {
     return {
       version: "",
@@ -270,6 +282,8 @@ export default {
         chairManUrl: "",
       },
       isExternal: false, // 是否已经打开了外接屏幕
+      subTitle: {action:"cancel", content:""}, // 字幕
+      inOutReminders: [], // 出入会通知
     };
   },
   computed: {
@@ -438,6 +452,19 @@ export default {
       this.shareContentStatus = e;
     });
 
+    // local 音频状态
+    this.xyRTC.on("AudioStatusChanged", (e) => {
+      console.log("local audio status changed: ", e);
+
+      const { muteMic } = e;
+
+      if (muteMic === "mute") {
+        this.audio = "mute";
+      } else if (muteMic === "unmute") {
+        this.audio = "unmute";
+      }
+    });
+
     // 实时获取麦克风声量大小（0-100）
     this.xyRTC.on("MicEnergyReported", (value) => {
       this.micLevel = value;
@@ -509,6 +536,24 @@ export default {
         this.xyRTC.stopExternal();
       }
     });
+  
+    // 字幕
+    this.xyRTC.on('SubTitle', (e) => {
+      this.subTitle = e;
+    });
+
+    // 出入会
+    this.xyRTC.on('InOutReminder', e=>{
+      this.inOutReminders  = e;
+    });
+
+      //  是否检测到啸叫 
+    this.xyRTC.on("HowlingDetected", (e) => {
+      console.log("HowlingDetected:", e);
+      if(e){
+        message.info("已检测到回声，可能您离终端太近!");
+      }
+    });
   },
   methods: {
     logout() {
@@ -533,18 +578,23 @@ export default {
     },
     makeCall() {
       // 登录&连接服务器成功，可以入会
-      const { meeting, meetingPassword, meetingName } = this.info;
+      const { meeting, meetingPassword, meetingName, muteVideo, muteAudio} = this.info;
 
       if (!meeting || !meetingName) {
         message.info("请填写入会信息");
         return;
       }
 
-      const result = this.xyRTC.makeCall(meeting, meetingPassword, meetingName);
+      this.xyRTC.setLocalPreviewResolution(2); // 设置本地画面采集分辨率（360P）
+
+      const result = this.xyRTC.makeCall(meeting, meetingPassword, meetingName, muteVideo, muteAudio);
 
       if (result.code === 3002) {
         message.info("请登录后发起呼叫");
       } else {
+        this.video = this.info.muteVideo  ? "muteVideo" : "unmuteVideo";
+        this.audio = this.info.muteAudio ? "mute" : "unmute";
+
         this.status = "calling";
       }
     },
@@ -558,6 +608,11 @@ export default {
       this.audio = "unmute";
       this.video = "unmuteVideo";
       this.status = "logined";
+      this.subTitle = {
+        action:"cancel",
+        content:""
+      };
+      this.inOutReminders = [];
 
       this.xyRTC.endCall();
     },
@@ -575,7 +630,7 @@ export default {
       this.xyRTC.stopSendContent();
     },
     shareContent() {
-      this.xyRTC.startSendContent();
+      this.xyRTC.startSendContent(true);
     },
     audioOperate() {
       if (this.audio === "mute" && this.disableAudio) {

@@ -65,8 +65,16 @@ export default {
   watch: {
     "item.position": {
       handler(newPosition) {
-        this.$refs.videoRef.width = newPosition.width;
-        this.$refs.videoRef.height = newPosition.height;
+        /**
+         *  建议根据设备像素比 设置 video的 width 和 height，以防止有锯齿问题
+         */
+        this.$refs.videoRef.style.width = newPosition.width;
+        this.$refs.videoRef.style.height = newPosition.height;
+
+        const dpr = window.devicePixelRatio || 1;
+
+        this.$refs.videoRef.width = newPosition.width * dpr;
+        this.$refs.videoRef.height = newPosition.height * dpr;
       },
       deep: true,
     },
@@ -92,8 +100,14 @@ export default {
   },
   mounted() {
     const { position, sourceId } = this.item;
-    this.$refs.videoRef.width = position.width;
-    this.$refs.videoRef.height = position.height;
+
+    this.$refs.videoRef.style.width = position.width;
+    this.$refs.videoRef.style.height = position.height;
+
+    const dpr = window.devicePixelRatio || 1;
+
+    this.$refs.videoRef.width = position.width * dpr;
+    this.$refs.videoRef.height = position.height * dpr;
 
     if (this.isExternal) {
       // 建立自己的render。

@@ -8,12 +8,18 @@
 # step1:
 $ yarn
 
-# step2:
+# step2(可选，默认安装最新32位Electron版本):
 # 安装完成后，安装32位electron，版本随意
 $ yarn add electron@5.0.13 -D --arch=ia32
 
 # step3:
-# 使用 yarn 或 npm 安装完成  @xylink/xy-electron-sdk 后，在项目根目录：node_modules -> @xylink -> xy-electron-sdk -> dll 文件夹下，将所有的文件复制到当前项目的根目录上；
+# 使用 yarn 或 npm 安装完成  @xylink/xy-electron-sdk 后，在项目根目录：node_modules -> @xylink -> xy-electron-sdk -> dll 文件夹下，将所有的文件复制到当前项目的根路径的dll目录下（可自定义dll加载路径，当前sdk demo指定了dll路径，参加`src\page\index.vue Line:352`，代码如下）；
+```js
+this.xyRTC = XYRTC.getXYInstance({
+  ...,
+  dllPath: "./dll"
+});
+```
 
 # step4:
 # 执行完步骤三，项目根目录会存在一个"I420ToARGB.cso"文件，将此文件复制到：node_modules\electron\dist 目录下；

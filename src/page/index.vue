@@ -349,6 +349,7 @@ export default {
     this.xyRTC = XYRTC.getXYInstance({
       httpProxy: proxy,
       model: this.model,
+      dllPath: "./dll"
     });
 
     const version = this.xyRTC.getVersion();

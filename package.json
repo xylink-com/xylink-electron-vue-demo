@@ -1,6 +1,6 @@
 {
   "name": "xy-electron-vue-demo",
-  "version": "0.2.5",
+  "version": "0.2.5-beta.1",
   "private": true,
   "description": "electron sdk vue",
   "author": {

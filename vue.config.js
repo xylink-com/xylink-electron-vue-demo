@@ -29,6 +29,7 @@ module.exports = {
             "./dll/vccorlib140.dll",
             "./dll/vcruntime140.dll",
             "./dll/xin265_32.dll",
+            "./dll/websokcet_mg.dll",
             // 将node_moduels里xy-electron-sdk包中的node包复制到resources目录上，方便打包调用
             {
               from: "node_modules/@xylink/xy-electron-sdk/build/Release/",

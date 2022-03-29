@@ -119,6 +119,7 @@ function createWindow() {
 
         if (isDevelopment) {
           externalWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL + "#/external");
+
           if (!process.env.IS_TEST) externalWindow.webContents.openDevTools();
 
         } else {
@@ -135,6 +136,10 @@ function createWindow() {
         // 监听页面是否加载完成，完成之后则开始进行数据的传递
         externalWindow.webContents.on("did-finish-load", () => {
           win.webContents.send("domReady", true);
+        });
+
+        externalWindow.webContents.on("did-fail-load", () => {
+          console.log('did-fail-load')
         });
 
         externalWindow.once("ready-to-show", () => {

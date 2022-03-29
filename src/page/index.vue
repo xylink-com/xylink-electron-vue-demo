@@ -356,6 +356,8 @@ export default {
 
     this.version = version;
 
+    // this.xyRTC.enableAECMode(false);
+
     // call status event
     this.xyRTC.on("CallState", (e) => {
       const { state, reason } = e;
@@ -829,7 +831,7 @@ export default {
         });
         // 监听页面是否加载完成
         ipcRenderer.on("domReady", (event, msg) => {
-          if (msg) {
+          if (msg && this.xyRTC) {
             this.isExternal = true;
 
             // 关闭原始屏的视频流渲染
@@ -839,23 +841,24 @@ export default {
               layout: this.layout,
             });
 
-            // 传递回调函数，在remote上设置sourceId对应的videoFrame
-            this.xyRTC.startExternal(({ sourceId, videoFrame }) => {
+            // 传递回调函数，在remote上设置id对应的videoFrame
+            this.xyRTC.startAllExternal(({id, videoFrame }) => {
               if (videoFrame && videoFrame.hasData) {
                 const temp = remote.getGlobal("sharedObject").videoFrames;
 
-                if (temp[sourceId]) {
+                if (temp[id]) {
                   remote.getGlobal("sharedObject").videoFrames[
-                    sourceId
+                    id
                   ] = videoFrame;
                 } else {
                   remote.getGlobal("sharedObject").videoFrames = {
                     ...temp,
-                    [sourceId]: {},
+                    [id]: {},
                   };
                 }
               }
             });
+
           }
         });
         // 监听是否有外接屏

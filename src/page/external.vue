@@ -12,7 +12,7 @@
   </div>
 </template>
 <script>
-import { ipcRenderer } from "electron";
+import { ipcRenderer, remote } from "electron";
 import Video from "./components/Video";
 
 export default {
@@ -57,11 +57,20 @@ export default {
       handler(newValue) {
         // 清理缓存
         this.renderMap.forEach((value, key) => {
-          const index = newValue.findIndex((item) => item.sourceId === key);
+          const index = newValue.findIndex((item) => item.id === key);
           if (index === -1) {
             this.renderMap.delete(key);
           }
         });
+
+        // 清理remote数据
+        const keys = Object.keys(remote.getGlobal("sharedObject").videoFrames);
+        keys.forEach((key)=>{
+          const index = newValue.findIndex((item) => item.id === key);
+          if (index === -1) {
+            remote.getGlobal("sharedObject").videoFrames[key] = null;
+          }
+        })
       },
       deep: true,
     },

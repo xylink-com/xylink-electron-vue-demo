@@ -68,22 +68,14 @@ export default {
         /**
          *  建议根据设备像素比 设置 video的 width 和 height，以防止有锯齿问题
          */
-        this.$refs.videoRef.style.width = newPosition.width;
-        this.$refs.videoRef.style.height = newPosition.height;
 
-        const dpr = window.devicePixelRatio || 1;
-
-        this.$refs.videoRef.width = newPosition.width * dpr;
-        this.$refs.videoRef.height = newPosition.height * dpr;
+        this.setPosition(newPosition);
       },
       deep: true,
     },
     "item.sourceId": {
       handler(newSourceId, previewSourceId) {
-        if (this.isExternal) {
-          // 建立自己的render，有可能sourceId第一次没有值，需要再次调用此方法，确保有对应的render
-          this.setRender(newSourceId);
-        } else if (newSourceId !== previewSourceId) {
+        if (!this.isExternal && newSourceId !== previewSourceId) {
           this.render({ sourceId: newSourceId });
         }
       },
@@ -99,19 +91,13 @@ export default {
     },
   },
   mounted() {
-    const { position, sourceId } = this.item;
+    const { position, sourceId, id} = this.item;
 
-    this.$refs.videoRef.style.width = position.width;
-    this.$refs.videoRef.style.height = position.height;
-
-    const dpr = window.devicePixelRatio || 1;
-
-    this.$refs.videoRef.width = position.width * dpr;
-    this.$refs.videoRef.height = position.height * dpr;
+    this.setPosition(position);
 
     if (this.isExternal) {
       // 建立自己的render。
-      this.setRender(sourceId);
+      this.setRender(id);
       // 开始渲染
       this.externalRender(this.item);
     } else {
@@ -152,34 +138,45 @@ export default {
       const { sourceId } = data;
       this.xyRTC.setVideoRender(sourceId, this.$refs.videoRef);
     },
-    // 建立自己的render
-    setRender(sourceId) {
-      if (sourceId && !this.renderMap.get(sourceId)) {
+    // [external] 建立自己的render
+    setRender(id) {
+      if (id && !this.renderMap.get(id)) {
         const render = new Render(this.$refs.videoRef);
-        this.renderMap.set(sourceId, render);
+        this.renderMap.set(id, render);
       }
     },
-    // 外接屏
+    setPosition(position) {
+      this.$refs.videoRef.style.width = position.width + 'px';
+      this.$refs.videoRef.style.height = position.height + 'px';
+
+      const dpr = window.devicePixelRatio || 1;
+
+      this.$refs.videoRef.width = position.width * dpr;
+      this.$refs.videoRef.height = position.height * dpr;
+    },
+    // [external] 外接屏
     externalRender(data) {
-      const { sourceId, roster } = data;
+      const { sourceId, roster, id} = data;
       const { state } = roster;
 
-      if (sourceId && !this.videoRenderTimmer && state === 5) {
+      if (!this.videoRenderTimmer && state === 5) {
         // 每秒30帧渲染
         this.videoRenderTimmer = xyTimer.setInterval(
-          sourceId,
+          id,
           () => {
-            this.drawBySourceId(sourceId);
+            this.drawBySourceId(id);
           },
           33.33
         );
       }
 
-      if ((!sourceId && this.videoRenderTimmer) || state !== 5) {
+      if (!sourceId || state !== 5) {
         this.clearTimer();
+
+        remote.getGlobal("sharedObject").videoFrames[id] = null;
       }
     },
-    // 外接屏 渲染
+    // [external] 外接屏 渲染
     drawExternalVideoFrame(id, videoFrame) {
       const render = this.renderMap.get(id);
 
@@ -192,15 +189,15 @@ export default {
         );
       }
     },
-    // 获取当前sourceId的videoFrame, 通过render进行渲染
+    //[external] 获取当前sourceId的videoFrame, 通过render进行渲染
     drawBySourceId() {
       const arr = Array.prototype.slice.call(arguments);
-      const sourceId = arr[0];
-      const videoFrame = remote.getGlobal("sharedObject").videoFrames[sourceId];
+      const id = arr[0];
+      const videoFrame = remote.getGlobal("sharedObject").videoFrames[id];
 
-      videoFrame?.hasData && this.drawExternalVideoFrame(sourceId, videoFrame);
+      videoFrame?.hasData && this.drawExternalVideoFrame(id, videoFrame);
     },
-    // 清除videoRenderTimmer
+    // [external] 清除videoRenderTimmer
     clearTimer() {
       if (this.videoRenderTimmer) {
         xyTimer.clearInterval(this.videoRenderTimmer.key);

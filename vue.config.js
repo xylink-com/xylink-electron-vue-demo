@@ -18,7 +18,7 @@ module.exports = {
             "./dll/avutil-56.dll",
             "./dll/concrt140.dll",
             "./dll/d3dx9_43.dll",
-            "./I420ToARGB.cso",
+            "./dll/I420ToARGB.cso",
             "./dll/Magnification.dll",
             "./dll/msvcp140.dll",
             "./dll/NemoSDK.dll",
@@ -34,6 +34,11 @@ module.exports = {
             {
               from: "node_modules/@xylink/xy-electron-sdk/build/Release/",
               to: "./resources",
+              filter: ["**/*"],
+            },
+            {
+              from: "./dll/I420ToARGB.cso",
+              to: "./",
               filter: ["**/*"],
             },
           ],

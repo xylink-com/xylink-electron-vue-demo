@@ -29,10 +29,19 @@ this.xyRTC = XYRTC.getXYInstance({
 ```
 
 ### 第四步
-执行完步骤三，项目根目录会存在一个"I420ToARGB.cso"文件，将此文件复制到：node_modules\electron\dist 目录下；
+执行完步骤三，项目dll目录会存在一个"I420ToARGB.cso"文件，将此文件复制到：node_modules\electron\dist 目录下；
 
-> 注意：步骤四是解决本地开发时，调用摄像头采集crash的问题，打正式包时，此步骤不需要，会自动copy此文件。
+> 注意：步骤四是解决本地开发时，调用摄像头采集crash的问题，打正式包时，此步骤不需要，需进行第五步配置。
 
+### 第五步
+打正式包时，需将"I420ToARGB.cso"文件放置在运行程序的根目录。改写打包配置，将"I420ToARGB.cso"文件配置成
+```
+{
+   from: "./dll/I420ToARGB.cso",
+   to: "./",
+   filter: ["**/*"],
+}
+```
 
 ## 本地开发
 

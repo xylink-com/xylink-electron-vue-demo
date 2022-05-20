@@ -81,7 +81,9 @@
             ></el-input>
 
             <div class="text">
-              <el-checkbox v-model="info.muteVideo">入会时关闭摄像头</el-checkbox>
+              <el-checkbox v-model="info.muteVideo"
+                >入会时关闭摄像头</el-checkbox
+              >
               <el-checkbox v-model="info.muteAudio">入会时静音</el-checkbox>
             </div>
             <div>
@@ -127,10 +129,12 @@
             ></Video>
           </div>
 
-           <Barrage v-if="subTitle.content && subTitle.action === 'push'" :subTitle = "subTitle"/>
-            
-          <InOutReminder :reminders = "inOutReminders"/>
+          <Barrage
+            v-if="subTitle.content && subTitle.action === 'push'"
+            :subTitle="subTitle"
+          />
 
+          <InOutReminder :reminders="inOutReminders" />
         </div>
 
         <div class="meeting-footer">
@@ -163,7 +167,7 @@
               <div class="title">共享</div>
             </div>
 
-            <div @click="videoOperate" :class="videoOperateClass">
+            <div v-if="callMode === 'AudioVideo'" @click="videoOperate" :class="videoOperateClass">
               <div class="icon"></div>
               <div class="title">
                 {{ video === "unmuteVideo" ? "关闭摄像头" : "开启摄像头" }}
@@ -182,10 +186,16 @@
               <div class="title">{{ audioStatus.status }}</div>
             </div>
 
+            <div @click="switchCallMode" class="button setting">
+              <div class="icon"></div>
+              <div class="title">{{ callMode === "AudioOnly" ? "退出语音模式" : "语音模式" }}</div>
+            </div>
+
             <div @click="toggleProxyModal" class="button setting">
               <div class="icon"></div>
               <div class="title">设置</div>
             </div>
+
             <div @click="sendExternalMsg" class="button setting">
               <div class="icon"></div>
               <div class="title">
@@ -217,7 +227,7 @@ import cloneDeep from "clone-deep";
 import Video from "./components/Video/index.vue";
 import SettingModal from "./components/Modal/index.vue";
 import InOutReminder from "./components/InOutReminder/index.vue";
-import Barrage from "./components/Barrage/index.vue"
+import Barrage from "./components/Barrage/index.vue";
 
 const store = new Store();
 
@@ -240,7 +250,7 @@ const defaultPageInfo = {
 
 export default {
   name: "App",
-  components: { Video, SettingModal, Barrage, InOutReminder},
+  components: { Video, SettingModal, Barrage, InOutReminder },
   data() {
     return {
       version: "",
@@ -282,8 +292,9 @@ export default {
         chairManUrl: "",
       },
       isExternal: false, // 是否已经打开了外接屏幕
-      subTitle: {action:"cancel", content:""}, // 字幕
+      subTitle: { action: "cancel", content: "" }, // 字幕
       inOutReminders: [], // 出入会通知
+      callMode: "AudioVideo",
     };
   },
   computed: {
@@ -363,7 +374,7 @@ export default {
       const { state, reason } = e;
 
       if (state === "Connected") {
-        if (status !== "meeting") {
+        if (this.status !== "meeting") {
           // start render
           this.status = "meeting";
 
@@ -539,21 +550,21 @@ export default {
         this.xyRTC.stopExternal();
       }
     });
-  
+
     // 字幕
-    this.xyRTC.on('SubTitle', (e) => {
+    this.xyRTC.on("SubTitle", (e) => {
       this.subTitle = e;
     });
 
     // 出入会
-    this.xyRTC.on('InOutReminder', e=>{
-      this.inOutReminders  = e;
+    this.xyRTC.on("InOutReminder", (e) => {
+      this.inOutReminders = e;
     });
 
-      //  是否检测到啸叫 
+    //  是否检测到啸叫
     this.xyRTC.on("HowlingDetected", (e) => {
       console.log("HowlingDetected:", e);
-      if(e){
+      if (e) {
         message.info("已检测到回声，可能您离终端太近!");
       }
     });
@@ -581,7 +592,8 @@ export default {
     },
     makeCall() {
       // 登录&连接服务器成功，可以入会
-      const { meeting, meetingPassword, meetingName, muteVideo, muteAudio} = this.info;
+      const { meeting, meetingPassword, meetingName, muteVideo, muteAudio } =
+        this.info;
 
       if (!meeting || !meetingName) {
         message.info("请填写入会信息");
@@ -590,12 +602,18 @@ export default {
 
       this.xyRTC.setLocalPreviewResolution(2); // 设置本地画面采集分辨率（360P）
 
-      const result = this.xyRTC.makeCall(meeting, meetingPassword, meetingName, muteVideo, muteAudio);
+      const result = this.xyRTC.makeCall(
+        meeting,
+        meetingPassword,
+        meetingName,
+        muteVideo,
+        muteAudio
+      );
 
       if (result.code === 3002) {
         message.info("请登录后发起呼叫");
       } else {
-        this.video = this.info.muteVideo  ? "muteVideo" : "unmuteVideo";
+        this.video = this.info.muteVideo ? "muteVideo" : "unmuteVideo";
         this.audio = this.info.muteAudio ? "mute" : "unmute";
 
         this.status = "calling";
@@ -612,8 +630,8 @@ export default {
       this.video = "unmuteVideo";
       this.status = "logined";
       this.subTitle = {
-        action:"cancel",
-        content:""
+        action: "cancel",
+        content: "",
       };
       this.inOutReminders = [];
 
@@ -842,14 +860,12 @@ export default {
             });
 
             // 传递回调函数，在remote上设置id对应的videoFrame
-            this.xyRTC.startAllExternal(({id, videoFrame }) => {
+            this.xyRTC.startAllExternal(({ id, videoFrame }) => {
               if (videoFrame && videoFrame.hasData) {
                 const temp = remote.getGlobal("sharedObject").videoFrames;
 
                 if (temp[id]) {
-                  remote.getGlobal("sharedObject").videoFrames[
-                    id
-                  ] = videoFrame;
+                  remote.getGlobal("sharedObject").videoFrames[id] = videoFrame;
                 } else {
                   remote.getGlobal("sharedObject").videoFrames = {
                     ...temp,
@@ -858,7 +874,6 @@ export default {
                 }
               }
             });
-
           }
         });
         // 监听是否有外接屏
@@ -869,6 +884,21 @@ export default {
         });
       } else {
         ipcRenderer.send("closeExternalWindow", true);
+      }
+    },
+
+    // 切换语音模式
+    switchCallMode() {
+      const mode = this.callMode === "AudioVideo" ? "AudioOnly" : "AudioVideo";
+
+      const isAudioMode = mode === "AudioOnly";
+
+      this.callMode = mode;
+
+      this.xyRTC.switchCallMode(mode);
+
+      if(this.video === 'unmuteVideo'){
+         this.xyRTC.muteCamera(isAudioMode);
       }
     },
   },

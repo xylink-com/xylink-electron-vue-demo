@@ -57,4 +57,4 @@ $ yarn build:32
 
 ### Docs
 
-See our [xy electron sdk docs](https://www.yuque.com/jinghui/xylink/gbi9i5)
+See our [xy electron sdk docs](https://openapi.xylink.com/common/meeting/doc/description?platform=electron)

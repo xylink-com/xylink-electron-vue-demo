@@ -1,14 +1,8 @@
 <template>
   <div id="app">
     <div class="container">
-      <SettingModal
-        :visible="visible"
-        :xyRTC="xyRTC"
-        :value="proxy"
-        :deviceChangeType="deviceChangeType"
-        @Cancel="toggleProxyModal"
-        @Ok="onSettingProxy"
-      />
+      <SettingModal :visible="visible" :xyRTC="xyRTC" :value="proxy" :deviceChangeType="deviceChangeType"
+        @Cancel="toggleProxyModal" @Ok="onSettingProxy" />
 
       <div>
         <div class="login">
@@ -22,74 +16,33 @@
             <div :style="{ marginLeft: '20px' }">
               <span>布局模式：</span>
               <el-select v-model="model" @change="switchModel">
-                <el-option
-                  v-for="item in modelList"
-                  :value="item.value"
-                  :key="item.value"
-                  :label="item.label"
-                />
+                <el-option v-for="item in modelList" :value="item.value" :key="item.value" :label="item.label" />
               </el-select>
             </div>
           </div>
 
           <el-row v-if="status === 'externalLogin'">
-            <el-input
-              class="text"
-              placeholder="extID"
-              v-model="info.extID"
-              clearable
-            ></el-input>
+            <el-input class="text" placeholder="extID" v-model="info.extID" clearable></el-input>
 
-            <el-input
-              class="text"
-              placeholder="extUserId"
-              v-model="info.extUserId"
-              clearable
-            ></el-input>
+            <el-input class="text" placeholder="extUserId" v-model="info.extUserId" clearable></el-input>
 
-            <el-input
-              class="text"
-              placeholder="displayName"
-              v-model="info.displayName"
-              clearable
-            ></el-input>
-            <el-button type="primary" @click="externalLogin"
-              >第三方登录</el-button
-            >
+            <el-input class="text" placeholder="displayName" v-model="info.displayName" clearable></el-input>
+            <el-button type="primary" @click="externalLogin">第三方登录</el-button>
           </el-row>
 
           <el-row v-if="status === 'logined'">
-            <el-input
-              class="text"
-              placeholder="会议号"
-              v-model="info.meeting"
-              clearable
-            ></el-input>
+            <el-input class="text" placeholder="会议号" v-model="info.meeting" clearable></el-input>
 
-            <el-input
-              class="text"
-              placeholder="入会密码"
-              v-model="info.meetingPassword"
-              clearable
-            ></el-input>
+            <el-input class="text" placeholder="入会密码" v-model="info.meetingPassword" clearable></el-input>
 
-            <el-input
-              class="text"
-              placeholder="入会昵称"
-              v-model="info.meetingName"
-              clearable
-            ></el-input>
+            <el-input class="text" placeholder="入会昵称" v-model="info.meetingName" clearable></el-input>
 
             <div class="text">
-              <el-checkbox v-model="info.muteVideo"
-                >入会时关闭摄像头</el-checkbox
-              >
+              <el-checkbox v-model="info.muteVideo">入会时关闭摄像头</el-checkbox>
               <el-checkbox v-model="info.muteAudio">入会时静音</el-checkbox>
             </div>
             <div>
-              <el-button class="xy__login-btn" type="primary" @click="makeCall"
-                >呼叫</el-button
-              >
+              <el-button class="xy__login-btn" type="primary" @click="makeCall">呼叫</el-button>
             </div>
             <div>
               <span class="login-type" @click="onLogout">注销</span>
@@ -101,10 +54,7 @@
       <div class="loading" v-if="status === 'calling'">
         <div class="loading-content">
           <div class="avatar">
-            <img
-              src="https://cdn.xylink.com/wechatMP/images/device_cm_ios%402x.png"
-              alt="nemo-avatar"
-            />
+            <img src="https://cdn.xylink.com/wechatMP/images/device_cm_ios%402x.png" alt="nemo-avatar" />
           </div>
           <div class="name">正在呼叫</div>
           <div class="stop" @click="hangup">
@@ -120,19 +70,16 @@
         </div>
 
         <div class="meeting-content">
+
+           <div class="status-container">
+              <CloudRecordStatus v-if="recordTipStatus" :showTimer='showTimer' :isRecordPaused='isRecordPaused'/>
+            </div>
+
           <div class="meeting-layout" :style="layoutStyle">
-            <Video
-              v-for="val in layoutList"
-              :key="val.key"
-              :item="val"
-              :xyRTC="xyRTC"
-            ></Video>
+            <Video v-for="val in layoutList" :key="val.key" :item="val" :xyRTC="xyRTC"></Video>
           </div>
 
-          <Barrage
-            v-if="subTitle.content && subTitle.action === 'push'"
-            :subTitle="subTitle"
-          />
+          <Barrage v-if="subTitle.content && subTitle.action === 'push'" :subTitle="subTitle" />
 
           <InOutReminder :reminders="inOutReminders" />
         </div>
@@ -154,17 +101,20 @@
               <div class="title">窗口布局</div>
             </div>
 
-            <div
-              v-if="shareContentStatus === 1"
-              @click="stopShareContent"
-              class="button share"
-            >
+            <div v-if="shareContentStatus === 1" @click="stopShareContent" class="button share">
               <div class="icon"></div>
               <div class="title">结束共享</div>
             </div>
             <div v-else @click="shareContent" class="button share">
               <div class="icon"></div>
               <div class="title">共享</div>
+            </div>
+
+            <div @click='recordOperate' :class='recordStyle'>
+              <div class="icon"></div>
+              <div class="title">
+                {{ recordText }}
+              </div>
             </div>
 
             <div v-if="callMode === 'AudioVideo'" @click="videoOperate" :class="videoOperateClass">
@@ -177,10 +127,7 @@
             <div @click="audioOperate" :class="audioStatus.className">
               <div class="icon"></div>
               <div class="aec" v-if="audio === 'unmute'">
-                <div
-                  class="aec_content"
-                  :style="{ transform: `translateY(-${micLevel}%)` }"
-                />
+                <div class="aec_content" :style="{ transform: `translateY(-${micLevel}%)` }" />
               </div>
 
               <div class="title">{{ audioStatus.status }}</div>
@@ -219,7 +166,7 @@
 import { XYRTC } from "@xylink/xy-electron-sdk";
 import Store from "electron-store";
 import { ipcRenderer, remote } from "electron";
-import { USER_INFO, DEFAULT_PROXY } from "../utils/enum";
+import { USER_INFO, DEFAULT_PROXY, RECORD_STATE_MAP } from "../utils/enum";
 import { TEMPLATE } from "../utils/template";
 import { getScreenInfo } from "../utils/index";
 import { Message } from "element-ui";
@@ -228,6 +175,7 @@ import Video from "./components/Video/index.vue";
 import SettingModal from "./components/Modal/index.vue";
 import InOutReminder from "./components/InOutReminder/index.vue";
 import Barrage from "./components/Barrage/index.vue";
+import CloudRecordStatus from "./components/CloudRecordStatus/index.vue";
 
 const store = new Store();
 
@@ -250,7 +198,7 @@ const defaultPageInfo = {
 
 export default {
   name: "App",
-  components: { Video, SettingModal, Barrage, InOutReminder },
+  components: { Video, SettingModal, Barrage, InOutReminder, CloudRecordStatus},
   data() {
     return {
       version: "",
@@ -295,6 +243,14 @@ export default {
       subTitle: { action: "cancel", content: "" }, // 字幕
       inOutReminders: [], // 出入会通知
       callMode: "AudioVideo",
+      recordStatus: RECORD_STATE_MAP.idel, // 本地录制状态
+      isRecordPaused: false, // 其它端是否录制暂停中
+      recordPermission: {  // 录制权限相关
+        isStartRecord: false, // 是否其他人已经开启录制
+        canRecord: true, // 录制开关
+        confCanRecord: true // 会控中开启关闭录制权限
+      },
+
     };
   },
   computed: {
@@ -355,8 +311,39 @@ export default {
         className,
       };
     },
+    disableRecord() {
+      const { isStartRecord, canRecord, confCanRecord } = this.recordPermission;
+
+      if (isStartRecord || !canRecord || !confCanRecord) {
+        return true;
+      }
+
+      if (![RECORD_STATE_MAP.idel, RECORD_STATE_MAP.acting].includes(this.recordStatus)) {
+        return true;
+      }
+
+      return false;
+    },
+    recordStyle() {
+      return `button ${this.recordStatus === RECORD_STATE_MAP.acting ? "pause_record" : "record"
+        } ${this.disableRecord ? "disabled-button" : ""}`
+    },
+    recordText() {
+      return this.recordStatus === RECORD_STATE_MAP.acting ? "停止录制" : "开启录制";
+
+    },
+    recordTipStatus() {
+      return !(!this.recordPermission.isStartRecord && RECORD_STATE_MAP.acting !== this.recordStatus)
+    },
+    showTimer() {
+      return RECORD_STATE_MAP.acting ===this.recordStatus;
+    }
   },
   mounted() {
+    if (this.xyRTC) {
+      console.log('mounted======================')
+    }
+
     this.xyRTC = XYRTC.getXYInstance({
       httpProxy: proxy,
       model: this.model,
@@ -496,13 +483,19 @@ export default {
     this.xyRTC.on("ConfControl", (e) => {
       console.log("metting control message: ", e);
 
-      const { disableMute, muteMic } = e;
+      const { disableMute, muteMic, disableRecord } = e;
       this.disableAudio = disableMute;
       if (muteMic === "mute") {
         this.audio = "mute";
       } else if (muteMic === "unmute") {
         this.audio = "unmute";
       }
+
+      // 会控控制录制权限
+      this.recordPermission = {
+        ...this.recordPermission,
+        confCanRecord: !disableRecord
+     }
     });
 
     // 会议信息发生变化，会推送此消息，开始计算请求layout
@@ -566,6 +559,43 @@ export default {
       console.log("HowlingDetected:", e);
       if (e) {
         message.info("已检测到回声，可能您离终端太近!");
+      }
+    });
+
+    // 别人开启或关闭云端录制
+    this.xyRTC.on("RecordStatusNotification", (e) => {
+      if (e.status) {
+        this.isRecordPaused = e.status === "RECORDING_STATE_PAUSED";
+      } else {
+
+        this.recordPermission = {
+          ...this.recordPermission,
+          isStartRecord: e.isStart
+        }
+      }
+    });
+
+    // 自己开启录制状态改变
+    this.xyRTC.on("RecordingStateChanged", (e) => {
+      // 无权限
+      if (e.reason === 'XYSDK:963902') {
+        this.recordPermission = {
+          ...this.recordPermission,
+          canRecord: false
+        }
+
+        return;
+      }
+
+      this.recordStatus = e.recordState;
+
+      if (e.reason !== 'STATE:200') {
+        message.info(e.message);
+        return;
+      }
+
+      if (e.recordState === RECORD_STATE_MAP.idel) {
+        message.info('云端录制完成，录制视频已保存到云会议室管理员的文件夹中')
       }
     });
   },
@@ -634,6 +664,14 @@ export default {
         content: "",
       };
       this.inOutReminders = [];
+
+      this.isRecordPaused = false;
+      this.recordStatus = RECORD_STATE_MAP.idel;
+      this.recordPermission = {
+        isStartRecord: false,
+        canRecord: true,
+        confCanRecord: true
+      }
 
       this.xyRTC.endCall();
     },
@@ -897,10 +935,23 @@ export default {
 
       this.xyRTC.switchCallMode(mode);
 
-      if(this.video === 'unmuteVideo'){
-         this.xyRTC.muteCamera(isAudioMode);
+      if (this.video === 'unmuteVideo') {
+        this.xyRTC.muteCamera(isAudioMode);
       }
     },
+
+    // 开始/停止录制
+    recordOperate() {
+      if (this.disableRecord) {
+        return;
+      }
+
+      if (this.recordStatus === RECORD_STATE_MAP.idel) {
+        this.xyRTC.startCloudRecord();
+      } else if (this.recordStatus === RECORD_STATE_MAP.acting) {
+        this.xyRTC.stopCloudRecord();
+      }
+    }
   },
   watch: {
     info: {

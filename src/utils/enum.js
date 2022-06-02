@@ -4,7 +4,7 @@
  * @author jinghui-Luo
  *
  * Created at     : 2020-08-24 16:11:04
- * Last modified  : 2021-08-10 18:14:12
+ * Last modified  : 2022-06-02 15:15:01
  */
 
 export const USER_INFO = {
@@ -21,3 +21,13 @@ export const USER_INFO = {
 };
 
 export const DEFAULT_PROXY = "cloud.xylink.com";
+
+
+
+export const RECORD_STATE_MAP={
+  idel:0, // 空闲 录制完成
+  starting:1, // 开启录制中
+  acting:2, // 正在录制中
+  stoping:3, // 停止录制中
+  inact:4 // 暂未使用 暂停录制相关，暂时用不到
+}

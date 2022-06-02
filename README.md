@@ -46,6 +46,6 @@ $ yarn dev
 $ yarn build:32
 ```
 
-### Docs
+### 文档
 
 See our [xy electron sdk docs](https://openapi.xylink.com/common/meeting/doc/description?platform=electron)

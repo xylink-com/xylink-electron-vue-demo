@@ -5,7 +5,7 @@
  */
 
 // CUSTOM 自定义布局时，需要自行计算Layout容器信息
-export const getScreenInfo = (elementId, nextTemplateRate, offset = [0,0]) => {
+export const getScreenInfo = (elementId, nextTemplateRate, offset = [0, 0]) => {
   let { clientHeight, clientWidth } =
     document.getElementById(elementId) || document.body;
 
@@ -25,7 +25,7 @@ export const getScreenInfo = (elementId, nextTemplateRate, offset = [0,0]) => {
     screenInfoObj.rateHeight = clientHeight;
     screenInfoObj.rateWidth = rateWidth;
   }
-  
-  console.log('getScreenInfo:',screenInfoObj);
+
+  console.log("getScreenInfo:", screenInfoObj);
   return screenInfoObj;
 };

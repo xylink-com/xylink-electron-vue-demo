@@ -1,7 +1,7 @@
 import VueRouter from "vue-router";
 
 import Index from "@/page/index";
-import External from "@/page/external";
+import Slave from "@/page/slave";
 
 const routes = [
   {
@@ -10,9 +10,9 @@ const routes = [
     component: Index,
   },
   {
-    name: "external",
-    path: "/external",
-    component: External,
+    name: "slave",
+    path: "/slave",
+    component: Slave,
   },
 ];
 

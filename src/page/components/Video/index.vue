@@ -29,7 +29,7 @@
 
           <div class="video-bg" v-if="status.isOnlyAudio">
             <div class="center">
-              <div class="displayname">
+              <div class="displayName">
                 {{ item.roster.displayName || "" }}
               </div>
               <div>语音通话中</div>
@@ -51,24 +51,21 @@
 </template>
 
 <script>
-import { remote } from "electron";
-import { Render, xyTimer } from "@xylink/xy-electron-sdk";
+import { ipcRenderer } from "electron";
+import { Render } from "@xylink/xy-electron-sdk";
 
 export default {
   name: "Video",
-  props: ["item", "xyRTC", "renderMap", "isExternal"],
+  props: ["item", "xyRTC", "renderMap", "isExternalDrawLocalVideo"],
   data() {
     return {
-      videoRenderTimmer: 0, // 视频流渲染定时器
+      rendererRef: null,
     };
   },
   watch: {
     "item.position": {
       handler(newPosition) {
-        /**
-         *  建议根据设备像素比 设置 video的 width 和 height，以防止有锯齿问题
-         */
-
+        // 建议根据设备像素比 设置 video的 width 和 height，以防止有锯齿问题
         this.setPosition(newPosition);
       },
       deep: true,
@@ -81,31 +78,30 @@ export default {
       },
       deep: true,
     },
-    item: {
-      handler(newItem) {
-        if (this.isExternal) {
-          this.externalRender(newItem);
-        }
-      },
-      deep: true,
-    },
   },
   mounted() {
-    const { position, sourceId, id} = this.item;
+    const { position, sourceId } = this.item;
 
     this.setPosition(position);
 
-    if (this.isExternal) {
-      // 建立自己的render。
-      this.setRender(id);
-      // 开始渲染
-      this.externalRender(this.item);
-    } else {
+    // 正常模式下，直接调用setVideoRender方法进行渲染画面即可
+    if (!this.isExternalDrawLocalVideo) {
       this.render({ sourceId });
+    } else {
+      // 初始化Render WebGL渲染器
+      // Local画面因为接收的主窗口IPC传递过来的YUV数据，需要自行渲染
+      // 外接屏幕的所有远端画面，不需要通过此方式处理
+      this.rendererRef = new Render(this.$refs.videoRef);
+
+      // 监听主窗口IPC传递过来的Local YUV Buffer数据
+      ipcRenderer.on("localVideoStream", this.onLocalVideoStream);
     }
   },
+  destroyed() {
+    ipcRenderer.removeListener("localVideoStream", this.onLocalVideoStream);
+  },
   computed: {
-    // calcaulate video status
+    // calculate video status
     status() {
       const { state = 0 } = this.item.roster;
       const pauseList = [0, 1, 3, 4, 8];
@@ -138,71 +134,25 @@ export default {
       const { sourceId } = data;
       this.xyRTC.setVideoRender(sourceId, this.$refs.videoRef);
     },
-    // [external] 建立自己的render
-    setRender(id) {
-      if (id && !this.renderMap.get(id)) {
-        const render = new Render(this.$refs.videoRef);
-        this.renderMap.set(id, render);
-      }
-    },
+    // 更新canvas 宽高属性和style样式
     setPosition(position) {
-      this.$refs.videoRef.style.width = position.width + 'px';
-      this.$refs.videoRef.style.height = position.height + 'px';
+      this.$refs.videoRef.style.width = position.width + "px";
+      this.$refs.videoRef.style.height = position.height + "px";
 
       const dpr = window.devicePixelRatio || 1;
 
       this.$refs.videoRef.width = position.width * dpr;
       this.$refs.videoRef.height = position.height * dpr;
     },
-    // [external] 外接屏
-    externalRender(data) {
-      const { sourceId, roster, id} = data;
-      const { state } = roster;
+    /**
+     *  副屏渲染Local画面，正常模式下，不需要执行
+     */
+    onLocalVideoStream(event, msg) {
+      const { buffer } = msg;
+      const { width, height, rotation } = msg.videoFrame;
 
-      if (!this.videoRenderTimmer && state === 5) {
-        // 每秒30帧渲染
-        this.videoRenderTimmer = xyTimer.setInterval(
-          id,
-          () => {
-            this.drawBySourceId(id);
-          },
-          33.33
-        );
-      }
-
-      if (!sourceId || state !== 5) {
-        this.clearTimer();
-
-        remote.getGlobal("sharedObject").videoFrames[id] = null;
-      }
-    },
-    // [external] 外接屏 渲染
-    drawExternalVideoFrame(id, videoFrame) {
-      const render = this.renderMap.get(id);
-
-      if (render) {
-        render.draw(
-          videoFrame.buffer,
-          videoFrame.width,
-          videoFrame.height,
-          videoFrame.rotation
-        );
-      }
-    },
-    //[external] 获取当前sourceId的videoFrame, 通过render进行渲染
-    drawBySourceId() {
-      const arr = Array.prototype.slice.call(arguments);
-      const id = arr[0];
-      const videoFrame = remote.getGlobal("sharedObject").videoFrames[id];
-
-      videoFrame?.hasData && this.drawExternalVideoFrame(id, videoFrame);
-    },
-    // [external] 清除videoRenderTimmer
-    clearTimer() {
-      if (this.videoRenderTimmer) {
-        xyTimer.clearInterval(this.videoRenderTimmer.key);
-        this.videoRenderTimmer = null;
-      }
+      // 调用渲染器绘画画面
+      this.rendererRef.draw(buffer, width, height, rotation);
     },
   },
 };
@@ -296,7 +246,7 @@ export default {
   flex-direction: column;
 }
 
-.video .video-model .displayname {
+.video .video-model .displayName {
   margin-bottom: 5px;
 }
 

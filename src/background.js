@@ -2,58 +2,98 @@
 
 import {
   app,
-  protocol,
   BrowserWindow,
-  Menu,
   globalShortcut,
   ipcMain,
   screen,
-  webContents,
+  protocol,
 } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import * as path from "path";
-import { format as formatUrl } from "url";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-// 必须提前定义好，存储视频流数据
-global.sharedObject = {
-  videoFrames: {},
-};
+console.log("process info:", {
+  electron: process.versions.electron,
+  architecture: process.env.PROCESSOR_ARCHITECTURE,
+  node: process.versions.node,
+  chrome: process.versions.chrome,
+  userData: app.getPath("userData"),
+  appdata: app.getPath("appData"),
+  temp: app.getPath("temp"),
+  exe: app.getPath("exe"),
+  logs: app.getPath("logs"),
+  app: app.getAppPath(),
+});
 
-let win;
-let externalWindow;
+// 副屏窗口引用
+let externalWindow = null;
+// 主窗口引用
+let mainWindow;
 
 protocol.registerSchemesAsPrivileged([
   { scheme: "app", privileges: { secure: true, standard: true } },
 ]);
 
-function createWindow() {
-  console.log(
-    "process.env.ELECTRON_NODE_INTEGRATION: ",
-    process.env.ELECTRON_NODE_INTEGRATION
-  );
-
-  win = new BrowserWindow({
-    width: 800,
-    height: 600,
+function createMainWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 660,
     webPreferences: {
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-      contextIsolation:false, 
-      enableRemoteModule:true
+      contextIsolation: false,
+      enableRemoteModule: true,
     },
+    title: "小鱼Electron Vue Dev",
   });
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
-    win.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
-    if (!process.env.IS_TEST) win.webContents.openDevTools();
+    mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
+    if (!process.env.IS_TEST) mainWindow.webContents.openDevTools();
   } else {
     createProtocol("app");
-    win.loadURL("app://./index.html");
+    mainWindow.loadURL("app://./index.html");
   }
 
-  win.on("closed", () => {
-    win = null;
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+
+    // 关闭主窗口时，也同时关闭副屏窗口
+    externalWindow && externalWindow.close();
+  });
+}
+
+// Quit when all windows are closed.
+app.on("window-all-closed", () => {
+  globalShortcut.unregister("CommandOrControl+Shift+I");
+
+  // On macOS it is common for applications and their menu bar
+  // to stay active until the user quits explicitly with Cmd + Q
+  if (process.platform !== "darwin") {
+    ipcMain.removeAllListeners();
+    app.quit();
+  }
+});
+
+app.on("activate", () => {
+  // On macOS it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (mainWindow === null) {
+    createMainWindow();
+  }
+});
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.on("ready", async () => {
+  createMainWindow();
+
+  // 注册快捷键
+  globalShortcut.register("CommandOrControl+Shift+I", () => {
+    let focusWin = BrowserWindow.getFocusedWindow();
+
+    focusWin && focusWin.toggleDevTools();
   });
 
   ipcMain.on("relaunch", (event, arg) => {
@@ -63,27 +103,12 @@ function createWindow() {
     }
   });
 
-  ipcMain.on("externalLayout", (event, msg) => {
-    if (msg && externalWindow) {
-      externalWindow.webContents.send("externalLayout", msg);
-    }
-  });
-
+  // 主窗口通知主进程关闭外接屏幕窗口
   ipcMain.on("closeExternalWindow", (event, msg) => {
+    console.log("closed external window");
+
     if (msg) {
       externalWindow && externalWindow.close();
-    }
-  });
-
-  ipcMain.on("ScreenInfo", (event, msg) => {
-    if (msg && externalWindow) {
-      externalWindow.webContents.send("ScreenInfo", msg);
-    }
-  });
-
-  ipcMain.on("set-video-frame", (event, msg) => {
-    if (msg && externalWindow) {
-      externalWindow.webContents.send("set-video-frame", msg);
     }
   });
 
@@ -91,110 +116,81 @@ function createWindow() {
   ipcMain.on("openWindow", (event, arg) => {
     if (arg) {
       const displays = screen.getAllDisplays();
-
-      const externalDispaly = displays.find((display) => {
+      const externalDisplay = displays.find((display) => {
         return display.bounds.x !== 0 || display.bounds.y !== 0;
       });
 
-      console.log("args: ", arg);
-      console.log("displays: ", displays);
-      console.log("externalDispaly: ", externalDispaly);
+      console.log("externalDisplay: ", externalDisplay);
 
       if (externalWindow) {
         externalWindow.close();
       }
 
-      if (externalDispaly) {
+      if (externalDisplay) {
         externalWindow = new BrowserWindow({
-          x: externalDispaly.bounds.x + 50,
-          y: externalDispaly.bounds.y + 50,
+          x: externalDisplay.bounds.x + 50,
+          y: externalDisplay.bounds.y + 50,
           width: 1000,
           height: 660,
           backgroundColor: "#fff",
           titleBarStyle: "hidden",
-          webPreferences: { nodeIntegration: true, contextIsolation:false, enableRemoteModule:true },
+          webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true,
+          },
           title: "小鱼Electron 外接屏幕",
           icon: path.join(__static, "logo.png"),
         });
 
         if (isDevelopment) {
-          externalWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL + "#/external");
+          externalWindow.loadURL(
+            process.env.WEBPACK_DEV_SERVER_URL + "#/slave"
+          );
 
           if (!process.env.IS_TEST) externalWindow.webContents.openDevTools();
-
         } else {
-          externalWindow.loadURL(
-            formatUrl({
-              pathname: path.join(__dirname, "index.html"),
-              protocol: "file",
-              slashes: false,
-              hash: "external",
-            })
-          );
+          createProtocol("app");
+          externalWindow.loadURL("app://./index.html#/slave");
         }
 
-        // 监听页面是否加载完成，完成之后则开始进行数据的传递
         externalWindow.webContents.on("did-finish-load", () => {
-          win.webContents.send("domReady", true);
-        });
+          const winId = {
+            externalId: externalWindow.webContents.id,
+            mainId: mainWindow.webContents.id,
+          };
 
-        externalWindow.webContents.on("did-fail-load", () => {
-          console.log('did-fail-load')
+          // 向外接屏幕发送当前窗口和主窗口的窗口id信息，便于渲染进程之间通信
+          mainWindow.webContents.send("currentWindowId", winId);
+          externalWindow.webContents.send("currentWindowId", winId);
+
+          mainWindow.webContents.send("domReady", true);
         });
 
         externalWindow.once("ready-to-show", () => {
           externalWindow.show();
         });
 
-        externalWindow.on("closed", () => {
-          externalWindow = null;
+        externalWindow.on("close", () => {
+          console.log("close external window");
 
-          if (win) {
-            win.webContents.send("closedExternalWindow", true);
+          if (mainWindow) {
+            mainWindow.webContents.send("closedExternalWindow", true);
           }
+
+          externalWindow.webContents.send("closedExternalWindow", true);
+        });
+
+        externalWindow.on("closed", () => {
+          console.log("closed external window");
+
+          externalWindow = null;
         });
       } else {
-        win.webContents.send("secondWindow", false);
+        mainWindow.webContents.send("secondWindow", false);
       }
     }
   });
-}
-
-// Quit when all windows are closed.
-app.on("window-all-closed", () => {
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
-
-app.on("activate", () => {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (win === null) {
-    createWindow();
-  }
-});
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on("ready", async () => {
-  if (isDevelopment && !process.env.IS_TEST) {
-    // Install Vue Devtools
-    // Devtools extensions are broken in Electron  6/7/<8.25 on Windows
-    // See https://github.com/nklayman/vue-cli-plugin-electron-builder/issues/378 for more info
-    // Electron will not launch with Devtools extensions installed on Windows 10 with dark mode
-    // If you are not using Windows 10 dark mode, you may uncomment the following lines (and the import at the top of the file)
-    // In addition, if you upgrade to Electron ^8.2.5 or ^9.0.0 then devtools should work fine
-    // try {
-    //   await installExtension(VUEJS_DEVTOOLS)
-    // } catch (e) {
-    //   console.error('Vue Devtools failed to install:', e.toString())
-    // }
-  }
-  createWindow();
 });
 
 // Exit cleanly on request from parent process in development mode.

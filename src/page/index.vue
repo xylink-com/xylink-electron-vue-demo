@@ -119,7 +119,13 @@
           <span>{{ info.meeting }}</span>
         </div>
 
-        <div class="meeting-content">
+        <div class="meeting-content" v-if="isExternal">
+          <div class="meeting-layout">
+            外接屏幕显示画面中，请勿最小化或关闭当前窗口，否则会导致远端窗口画面卡顿...
+          </div>
+        </div>
+
+        <div class="meeting-content" v-else>
           <div class="meeting-layout" :style="layoutStyle">
             <Video
               v-for="val in layoutList"
@@ -167,7 +173,11 @@
               <div class="title">共享</div>
             </div>
 
-            <div v-if="callMode === 'AudioVideo'" @click="videoOperate" :class="videoOperateClass">
+            <div
+              v-if="callMode === 'AudioVideo'"
+              @click="videoOperate"
+              :class="videoOperateClass"
+            >
               <div class="icon"></div>
               <div class="title">
                 {{ video === "unmuteVideo" ? "关闭摄像头" : "开启摄像头" }}
@@ -188,7 +198,9 @@
 
             <div @click="switchCallMode" class="button setting">
               <div class="icon"></div>
-              <div class="title">{{ callMode === "AudioOnly" ? "退出语音模式" : "语音模式" }}</div>
+              <div class="title">
+                {{ callMode === "AudioOnly" ? "退出语音模式" : "语音模式" }}
+              </div>
             </div>
 
             <div @click="toggleProxyModal" class="button setting">
@@ -196,7 +208,7 @@
               <div class="title">设置</div>
             </div>
 
-            <div @click="sendExternalMsg" class="button setting">
+            <div @click="operateExternalWindow" class="button setting">
               <div class="icon"></div>
               <div class="title">
                 {{ isExternal ? "关闭外接" : "打开外接" }}
@@ -218,8 +230,8 @@
 <script>
 import { XYRTC } from "@xylink/xy-electron-sdk";
 import Store from "electron-store";
-import { ipcRenderer, remote } from "electron";
-import { USER_INFO, DEFAULT_PROXY } from "../utils/enum";
+import { ipcRenderer } from "electron";
+import { USER_INFO, DEFAULT_PROXY, LOCAL_VIEW_ID } from "../utils/enum";
 import { TEMPLATE } from "../utils/template";
 import { getScreenInfo } from "../utils/index";
 import { Message } from "element-ui";
@@ -295,6 +307,14 @@ export default {
       subTitle: { action: "cancel", content: "" }, // 字幕
       inOutReminders: [], // 出入会通知
       callMode: "AudioVideo",
+      // ------------以下是变量值，不影响UI变化-------------
+      layoutRef: [],
+      windowIdRef: [],
+      isExternalRef: false,
+      cacheScreenInfo: {
+        rateWidth: 0,
+        rateHeight: 0,
+      },
     };
   },
   computed: {
@@ -360,12 +380,14 @@ export default {
     this.xyRTC = XYRTC.getXYInstance({
       httpProxy: proxy,
       model: this.model,
-      dllPath: "./dll"
+      dllPath: "./dll",
     });
 
     const version = this.xyRTC.getVersion();
 
     this.version = version;
+
+    this.xyRTC.setLogLevel("NONE");
 
     // this.xyRTC.enableAECMode(false);
 
@@ -428,13 +450,18 @@ export default {
         const nextLayout = this.calculateBaseLayoutList(e);
 
         this.layout = nextLayout;
+        this.layoutRef = nextLayout;
       } else {
-        this.layout = cloneDeep(e);
+        const nextLayout = cloneDeep(e);
+
+        this.layout = nextLayout;
+        this.layoutRef = nextLayout;
       }
 
-      ipcRenderer.send("externalLayout", {
-        layout: this.layout,
-      });
+      // 如果是副屏模式，需要每次推送最新的Local数据
+      if (this.isExternal) {
+        this.sendLocalInExInternal();
+      }
     });
 
     this.xyRTC.on("KickOut", (e) => {
@@ -494,7 +521,7 @@ export default {
     // 可以通过此消息获取：会控播放地址/主会场callUri/麦克风状态/是否是强制静音麦克风
     // 自定义布局模式下，主会场callUri需要记录下来，后续requestLayout计算需要使用
     this.xyRTC.on("ConfControl", (e) => {
-      console.log("metting control message: ", e);
+      console.log("meeting control message: ", e);
 
       const { disableMute, muteMic } = e;
       this.disableAudio = disableMute;
@@ -540,15 +567,6 @@ export default {
       this.cachePageInfo = nextPageInfo;
 
       this.startRequestLayout();
-    });
-
-    // 监听外屏窗口是否已经关闭
-    ipcRenderer.on("closedExternalWindow", (event, msg) => {
-      if (msg) {
-        this.isExternal = false;
-        remote.getGlobal("sharedObject").videoFrames = {};
-        this.xyRTC.stopExternal();
-      }
     });
 
     // 字幕
@@ -837,54 +855,124 @@ export default {
         this.cachePageInfo.currentPage = nextPage;
       }
 
-      console.log("switch paage: ", this.cachePageInfo);
+      console.log("switch page: ", this.cachePageInfo);
 
       this.startRequestLayout();
     },
-    sendExternalMsg() {
-      if (!this.isExternal) {
-        // 打开外接屏
-        ipcRenderer.send("openWindow", {
-          title: "外接屏幕",
+
+    openNewWindow() {
+      // 打开外接屏
+      ipcRenderer.send("openWindow", {
+        title: "外接屏幕",
+      });
+    },
+
+    // 向外接屏幕发送local roster info信息
+    sendLocalInExInternal() {
+      console.log("layout: ", this.layoutRef);
+
+      const localList = this.layoutRef.filter(
+        (item) => item.sourceId === LOCAL_VIEW_ID
+      );
+      const local = localList.length ? localList[0] : null;
+      const externalId = this.windowIdRef?.externalId;
+
+      if (externalId) {
+        ipcRenderer.sendTo(externalId, "localInfo", {
+          ...local,
+          isLocal: true,
         });
+      }
+    },
+
+    async startMaster() {
+      await this.xyRTC.startMaster({
+        deviceID: "LocalDeviceId",
+      });
+    },
+
+    sendLocalBuffer() {
+      const onLocalStream = (data) => {
+        const { buffer } = data.videoFrame;
+        const externalId = this.windowIdRef?.externalId;
+
+        if (externalId) {
+          ipcRenderer.sendTo(externalId, "localVideoStream", {
+            videoFrame: data.videoFrame,
+            buffer: new Uint8Array(buffer),
+          });
+        }
+      };
+
+      this.xyRTC.startLocalExternal(onLocalStream);
+    },
+
+    operateExternalWindow() {
+      if (!this.isExternal) {
+        console.log("打开外接屏幕");
+
+        this.isExternal = true;
+
+        // 打开外接屏
+        this.openNewWindow();
+
         // 监听页面是否加载完成
         ipcRenderer.on("domReady", (event, msg) => {
-          if (msg && this.xyRTC) {
-            this.isExternal = true;
+          if (msg) {
+            console.log("-------------external window load finished");
 
-            // 关闭原始屏的视频流渲染
+            // 手动触发一次更新local数据
+            this.sendLocalInExInternal();
+            this.startMaster();
             this.xyRTC.stopAllVideoRender();
 
-            ipcRenderer.send("externalLayout", {
-              layout: this.layout,
-            });
-
-            // 传递回调函数，在remote上设置id对应的videoFrame
-            this.xyRTC.startAllExternal(({ id, videoFrame }) => {
-              if (videoFrame && videoFrame.hasData) {
-                const temp = remote.getGlobal("sharedObject").videoFrames;
-
-                if (temp[id]) {
-                  remote.getGlobal("sharedObject").videoFrames[id] = videoFrame;
-                } else {
-                  remote.getGlobal("sharedObject").videoFrames = {
-                    ...temp,
-                    [id]: {},
-                  };
-                }
-              }
-            });
+            this.sendLocalBuffer();
           }
         });
+
+        // 监听获取所有窗口id数据，用于向对应窗口推送数据
+        ipcRenderer.on("currentWindowId", (event, msg) => {
+          console.log("currentWindowId: ", msg);
+
+          // 缓存窗口id数据，后续使用此id信息发送渲染进程消息
+          this.windowIdRef = msg;
+        });
+
         // 监听是否有外接屏
         ipcRenderer.on("secondWindow", (event, msg) => {
           if (!msg) {
+            this.isExternal = false;
             message.info("请连接外接屏");
           }
         });
+
+        // 监听外接屏幕关闭事件
+        ipcRenderer.on("closedExternalWindow", () => {
+          console.log("close external window...");
+
+          this.closeExternalScreen();
+        });
       } else {
+        console.log("通知主进程，关闭外接屏窗口");
+
+        // 通知主进程关闭外接屏幕窗口，由主进程统一向主窗口和副窗口发送关闭事件，销毁资源
         ipcRenderer.send("closeExternalWindow", true);
       }
+    },
+
+    closeExternalScreen() {
+      console.log("close external screen event");
+
+      this.windowIdRef = {};
+      // 停止上报数据流
+      this.xyRTC.stopLocalExternal();
+
+      // 停止主进程Slave模式
+      this.xyRTC.stopMaster();
+      // 记录当前外接屏幕状态
+      this.isExternal = false;
+      // 停止ipc监听器
+      ipcRenderer.removeAllListeners();
     },
 
     // 切换语音模式
@@ -897,8 +985,8 @@ export default {
 
       this.xyRTC.switchCallMode(mode);
 
-      if(this.video === 'unmuteVideo'){
-         this.xyRTC.muteCamera(isAudioMode);
+      if (this.video === "unmuteVideo") {
+        this.xyRTC.muteCamera(isAudioMode);
       }
     },
   },

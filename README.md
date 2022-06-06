@@ -19,7 +19,7 @@ $ yarn add electron@5.0.13 -D --arch=ia32
 ```
 
 ### 第三步
-安装完成  @xylink/xy-electron-sdk 后，进入项目根目录 -> node_modules -> @xylink -> xy-electron-sdk -> dll 文件夹下，将所有的文件复制到当前项目的根路径的 dll 目录下（可自定义dll加载路径，当前sdk demo指定了dll路径，参加`src\page\index.vue Line:352`，代码如下）；
+安装完成  @xylink/xy-electron-sdk 后，进入项目根目录 -> node_modules -> @xylink -> xy-electron-sdk -> dll 文件夹下，将所有的文件复制到当前项目的根路径的 dll 目录下（可自定义dll加载路径，当前sdk demo指定了dll路径，参见`src\page\index.vue`，代码如下）；
 
 ```js
 this.xyRTC = XYRTC.getXYInstance({
@@ -48,4 +48,4 @@ $ yarn build:32
 
 ### Docs
 
-See our [xy electron sdk docs](https://www.yuque.com/jinghui/xylink/gbi9i5)
+See our [xy electron sdk docs](https://openapi.xylink.com/common/meeting/doc/description?platform=electron)

@@ -35,7 +35,7 @@ import Video from "./components/Video";
 import cloneDeep from "clone-deep";
 import { getScreenInfo } from "../utils/index";
 import { TEMPLATE } from "../utils/template";
-import { XYRenderRTC } from "@xylink/xy-electron-sdk";
+import { XYSlaveRTC } from "@xylink/xy-electron-sdk";
 
 export default {
   name: "Slave",
@@ -92,7 +92,7 @@ export default {
 
     console.log("start init start");
 
-    this.xyRTC = XYRenderRTC.getXYInstance({
+    this.xyRTC = XYSlaveRTC.getXYInstance({
       // 动态设置环境，当构建正式包时，dll从当前程序的dll目录加载，dev开发时，从sdk目录加载
       dllPath: "./dll",
     });

@@ -14,7 +14,7 @@
   },
   "main": "background.js",
   "dependencies": {
-    "@xylink/xy-electron-sdk": "0.3.1",
+    "@xylink/xy-electron-sdk": "^0.3.2-beta.1",
     "core-js": "^3.6.5",
     "element-ui": "^2.13.2",
     "vue": "^2.6.12",

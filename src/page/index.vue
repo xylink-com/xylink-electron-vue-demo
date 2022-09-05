@@ -81,10 +81,8 @@
             ></el-input>
 
             <div class="text">
-              <el-checkbox v-model="info.muteVideo"
-                >入会时关闭摄像头</el-checkbox
-              >
-              <el-checkbox v-model="info.muteAudio">入会时静音</el-checkbox>
+              <el-checkbox v-model="unmuteCamera">开启摄像头</el-checkbox>
+              <el-checkbox v-model="unmuteMic">开启麦克风</el-checkbox>
             </div>
             <div>
               <el-button class="xy__login-btn" type="primary" @click="makeCall"
@@ -153,8 +151,8 @@
         <div class="meeting-footer">
           <div class="middle">
             <div @click="switchPage('previous')" class="button layout">
-              <div className="icon"></div>
-              <div className="title">上一页（{{ pageInfo.currentPage }}）</div>
+              <div class="icon"></div>
+              <div class="title">上一页（{{ pageInfo.currentPage }}）</div>
             </div>
 
             <div @click="switchPage('next')" class="button layout">
@@ -165,6 +163,12 @@
             <div @click="switchLayout" class="button layout">
               <div class="icon"></div>
               <div class="title">窗口布局</div>
+            </div>
+            <div @click="openMeetingControlWin" class="button layout">
+              <div class="icon"></div>
+              <div class="title">
+                主持会议({{ cacheConfInfo.visibleEpCount || 1 }})
+              </div>
             </div>
 
             <div
@@ -242,7 +246,8 @@
 </template>
 
 <script>
-import { XYRTC } from "@xylink/xy-electron-sdk";
+// import { XYRTC } from "@xylink/xy-electron-sdk";
+import XYRTC from "../utils/xyRTC";
 import Store from "electron-store";
 import { ipcRenderer, remote } from "electron";
 import { USER_INFO, DEFAULT_PROXY, RECORD_STATE_MAP } from "../utils/enum";
@@ -305,9 +310,11 @@ export default {
       // xyLogin/externalLogin/logined/calling/meeting
       status: "externalLogin",
       layout: [],
-      audio: "unmute",
-      video: "unmuteVideo",
+      audio: "mute",
+      video: "muteVideo",
       disableAudio: false,
+      conferenceInfo:{},
+      confMgmtUrl:'',
       shareContentStatus: 0,
       setting: false,
       model: MODEL,
@@ -455,6 +462,30 @@ export default {
       console.log("contentInfo", contentInfo);
       return contentInfo;
     },
+    disabledPage() {
+      if (this.model === "custom") {
+        return false;
+      }
+
+      const { participantCount, chairManUrl } = this.cacheConfInfo;
+      const localLayout = this.layoutList.find(
+        (item) => item.sourceId === "LocalPreviewID"
+      );
+      const isRemoteManUrl =
+        chairManUrl && chairManUrl !== localLayout?.roster.callUri;
+      // 1. 主会场出现 2. local+远端content 3. 本地共享content 4. 只有一个人
+      return (
+        this.shareContentStatus === 1 ||
+        isRemoteManUrl ||
+        participantCount === 1
+      );
+    },
+    unmuteCamera() {
+      return !this.info.muteVideo;
+    },
+    unmuteMic() {
+      return !this.info.muteAudio;
+    },
   },
   // watch: {
   //   cacheConfInfo: {
@@ -469,7 +500,7 @@ export default {
       console.log("mounted======================");
     }
 
-    this.xyRTC = XYRTC.getXYInstance({
+    this.xyRTC = XYRTC.getInstance({
       httpProxy: proxy,
       model: this.model,
       dllPath: "./dll",
@@ -488,6 +519,16 @@ export default {
     this.xyRTC.on("ForceFullScreen", (id) => {
       console.log("Event forceFullScreen id:", id);
       this.forceFullScreenId = id;
+    });
+
+    this.xyRTC.on("PageInfo", (e) => {
+      console.log("PageInfo: ", e);
+      this.pageInfo = e;
+    });
+
+    this.xyRTC.on("ConferenceInfo", (e) => {
+      console.log("ConferenceInfo: ", e);
+      this.conferenceInfo = e;
     });
 
     // call status event
@@ -624,6 +665,7 @@ export default {
         disableRecord,
         chirmanUri,
         disableContent,
+        confMgmtUrl
       } = e;
       this.disableAudio = disableMute;
       if (muteMic === "mute") {
@@ -642,6 +684,7 @@ export default {
 
       // 会控触发主会场
       this.chirmanUri = chirmanUri;
+      this.confMgmtUrl = confMgmtUrl;
     });
 
     // 会议信息发生变化，会推送此消息，开始计算请求layout
@@ -814,6 +857,9 @@ export default {
         this.isExternal = false;
       }
 
+      // 关闭会控弹框
+      ipcRenderer.send("meetingControlWin", false);
+
       this.audio = "unmute";
       this.video = "unmuteVideo";
       this.status = "logined";
@@ -872,7 +918,7 @@ export default {
         return;
       }
 
-      const withDesktopAudio = store.get("xyWithDesktopAudio");
+      const withDesktopAudio = store.get("xyWithDesktopAudio") || false;
       this.xyRTC.startSendContent(withDesktopAudio);
     },
     audioOperate() {
@@ -1024,13 +1070,27 @@ export default {
     },
     switchPage(type) {
       console.log("cachePageInfo: ", this.cachePageInfo);
-      const { currentPage, totalPage } = this.cachePageInfo;
-      let nextPage = currentPage;
 
       if (this.model === "auto") {
-        message.info("自动布局不支持分页显示");
+        const { currentPage } = this.pageInfo;
+        const targetPage =
+          type === "next"
+            ? currentPage + 1
+            : type === "previous"
+            ? currentPage - 1
+            : type === "home"
+            ? 0
+            : type;
+
+        this.xyRTC.switchPage(targetPage).then(
+          (res) => console.log("switch page success: ", res),
+          (err) => console.log("switch page fail: ", err)
+        );
         return;
       }
+
+      const { currentPage, totalPage } = this.cachePageInfo;
+      let nextPage = currentPage;
 
       if (this.shareContentStatus === 1) {
         message.info("正在分享content，不允许分页");
@@ -1134,6 +1194,18 @@ export default {
         this.xyRTC.startCloudRecord();
       } else if (this.recordStatus === RECORD_STATE_MAP.acting) {
         this.xyRTC.stopCloudRecord();
+      }
+    },
+    openMeetingControlWin() {
+      // 会控链接
+      // const { pc } = this.xyRTC.getConfMgmtUrl();
+      const pc = this.confMgmtUrl;
+      console.log('pc',pc)
+
+      const { meetingNumber = "" } = this.conferenceInfo;
+
+      if (pc) {
+        ipcRenderer.send("meetingControlWin", { url: pc, meetingNumber });
       }
     },
   },

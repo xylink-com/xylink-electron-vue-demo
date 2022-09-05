@@ -16,6 +16,16 @@ import { format as formatUrl } from "url";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
+const RESOURCES_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'assets')
+  : path.join(__dirname, '../../assets');
+
+export const getAssetPath = (...paths) => {
+  return path.join(RESOURCES_PATH, ...paths);
+};
+
+const icon = getAssetPath('logo512.png');
+
 // 必须提前定义好，存储视频流数据
 global.sharedObject = {
   videoFrames: {},
@@ -23,6 +33,8 @@ global.sharedObject = {
 
 let win;
 let externalWindow;
+// 会控窗口
+let meetingControlWindow = null;
 
 protocol.registerSchemesAsPrivileged([
   { scheme: "app", privileges: { secure: true, standard: true } },
@@ -39,7 +51,7 @@ function createWindow() {
     height: 600,
     webPreferences: {
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-      contextIsolation:false, 
+      contextIsolation:false,
       enableRemoteModule:true
     },
   });
@@ -158,6 +170,38 @@ function createWindow() {
       }
     }
   });
+
+
+// 打开会控弹窗
+ipcMain.on('meetingControlWin', (event, arg) => {
+  if (!arg) {
+    if (meetingControlWindow) {
+      meetingControlWindow.close();
+      meetingControlWindow = null;
+    }
+  }
+
+  if (arg && arg.url) {
+    meetingControlWindow = new BrowserWindow({
+      width: 1000,
+      height: 700,
+      frame: true,
+      title: arg.meetingNumber,
+      icon,
+    });
+
+    meetingControlWindow.loadURL(arg.url);
+
+    meetingControlWindow.on('close', () => {
+      meetingControlWindow = null;
+    });
+
+    // 阻止本机窗口的标题更改
+    meetingControlWindow.on('page-title-updated', (event) => {
+      event.preventDefault();
+    })
+  }
+});
 }
 
 // Quit when all windows are closed.

@@ -32,7 +32,7 @@
             </div>
           </div>
 
-          <el-row v-if="status === 'externalLogin'">
+          <el-row v-if="meetingStore.callState === 'externalLogin'">
             <el-input
               class="text"
               placeholder="extID"
@@ -58,7 +58,7 @@
             >
           </el-row>
 
-          <el-row v-if="status === 'logined'">
+          <el-row v-if="meetingStore.callState === 'logined'">
             <el-input
               class="text"
               placeholder="会议号"
@@ -96,7 +96,7 @@
         </div>
       </div>
 
-      <div class="loading" v-if="status === 'calling'">
+      <div class="loading" v-if="meetingStore.callState === 'calling'">
         <div class="loading-content">
           <div class="avatar">
             <img
@@ -112,10 +112,12 @@
         </div>
       </div>
 
-      <div v-if="status === 'meeting'">
-        <div class="meeting-header">
-          <span>{{ info.meeting }}</span>
-        </div>
+      <div v-if="meetingStore.callState === 'meeting'">
+        <MeetingHeader
+          v-if="meetingStore.callState === 'meeting'"
+          :conferenceInfo="conferenceInfo"
+          :holdInfo="holdInfo"
+        />
 
         <div class="meeting-content">
           <PromptInfo
@@ -261,7 +263,8 @@ import InOutReminder from "./components/InOutReminder/index.vue";
 import Barrage from "./components/Barrage/index.vue";
 import CloudRecordStatus from "./components/CloudRecordStatus/index.vue";
 import PromptInfo from "./components/PromptInfo/index.vue";
-
+import MeetingHeader from "./components/Header/index.vue";
+import { useCallStateStore } from "../store/index";
 const store = new Store();
 
 const message = {
@@ -290,6 +293,7 @@ export default {
     InOutReminder,
     CloudRecordStatus,
     PromptInfo,
+    MeetingHeader,
   },
   data() {
     return {
@@ -312,9 +316,11 @@ export default {
       layout: [],
       audio: "mute",
       video: "muteVideo",
+      meetingStore: useCallStateStore(),
       disableAudio: false,
-      conferenceInfo:{},
-      confMgmtUrl:'',
+      conferenceInfo: {},
+      confMgmtUrl: "",
+      holdInfo: {},
       shareContentStatus: 0,
       setting: false,
       model: MODEL,
@@ -536,9 +542,9 @@ export default {
       const { state, reason } = e;
 
       if (state === "Connected") {
-        if (this.status !== "meeting") {
+        if (this.meetingStore.callState !== "meeting") {
           // start render
-          this.status = "meeting";
+          this.meetingStore.callState = "meeting";
 
           message.info("入会成功");
         }
@@ -556,7 +562,7 @@ export default {
       if (e.state === "Logined") {
         message.info("登录成功");
 
-        this.status = "logined";
+        this.meetingStore.callState = "logined";
       } else if (e.state === "Logouted") {
         if (e.error === 1013 || e.error === 1014 || e.error === 1031) {
           message.info("用户名或密码错误");
@@ -566,7 +572,7 @@ export default {
           message.info("注销成功");
         }
 
-        this.status = "externalLogin";
+        this.meetingStore.callState = "externalLogin";
       }
     });
 
@@ -665,7 +671,7 @@ export default {
         disableRecord,
         chirmanUri,
         disableContent,
-        confMgmtUrl
+        confMgmtUrl,
       } = e;
       this.disableAudio = disableMute;
       if (muteMic === "mute") {
@@ -799,6 +805,11 @@ export default {
         message.info("云端录制完成，录制视频已保存到云会议室管理员的文件夹中");
       }
     });
+
+    // 等候室信息
+    this.xyRTC.on("OnHold", (e) => {
+      this.holdInfo = e;
+    });
   },
   methods: {
     logout() {
@@ -847,7 +858,7 @@ export default {
         this.video = this.info.muteVideo ? "muteVideo" : "unmuteVideo";
         this.audio = this.info.muteAudio ? "mute" : "unmute";
 
-        this.status = "calling";
+        this.meetingStore.callState = "calling";
       }
     },
     hangup() {
@@ -862,7 +873,7 @@ export default {
 
       this.audio = "unmute";
       this.video = "unmuteVideo";
-      this.status = "logined";
+      this.meetingStore.callState = "logined";
       this.subTitle = {
         action: "cancel",
         content: "",
@@ -1200,7 +1211,7 @@ export default {
       // 会控链接
       // const { pc } = this.xyRTC.getConfMgmtUrl();
       const pc = this.confMgmtUrl;
-      console.log('pc',pc)
+      console.log("pc", pc);
 
       const { meetingNumber = "" } = this.conferenceInfo;
 

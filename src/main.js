@@ -6,7 +6,7 @@ import "./plugins/element.js";
 import "./style/global.index.css";
 import { createPinia, PiniaVuePlugin } from 'pinia';
 
-Vue.use(PiniaVuePlugin)
+Vue.use(PiniaVuePlugin);
 Vue.use(VueRouter);
 Vue.config.productionTip = false;
 

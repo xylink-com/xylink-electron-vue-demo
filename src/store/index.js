@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-export const toolbarStore = defineStore('toolbar', {
+export const useToolbarStore = defineStore('toolbar', {
   state: () => {
     return {
       enableHidden: true, // 是否启用隐藏
@@ -9,8 +9,20 @@ export const toolbarStore = defineStore('toolbar', {
     }
 
   },
-  getters(){},
+  getters() { },
   actions: {
 
   },
 })
+
+// 'XY' = 'xyLogin',
+//   'EXTERNAL' = 'externalLogin',
+//   'CALLING' = 'calling',
+//   'MEETING' = 'meeting',
+export const useCallStateStore = defineStore('callState', {
+  state: () => {
+    return {
+      callState:'calling'
+    }
+  }
+});

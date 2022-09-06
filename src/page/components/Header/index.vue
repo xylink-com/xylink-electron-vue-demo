@@ -1,82 +1,110 @@
 <template>
   <div class="meeting-header">
     <span class="header-time">
-      <div
-        :class="{ 'header-signal': true, 'signal_[level]': true }"
-        @click="toggleInternal"
-      />
-      <el-tooltip
-        class="item"
-        effect="dark"
-        content="已经使用{{encrypt}}加密"
-        placement="left-end"
-      >
+      <div :class="signalStyle" @click="toggleInternal" />
+      <el-tooltip class="item" effect="dark" placement="left-end">
+        <div slot="content">已经使用{{ encrypt }}加密</div>
         <span class="icon-encrypt" />
       </el-tooltip>
 
-      <!-- {!isOnhold && <Timer />} -->
+      <Timer v-if="!holdInfo.isOnhold" />
     </span>
 
     <span class="header-conference">
       <span class="header-conference-name">
-        {{ displayName }}
-        {{ numberType !== "CONFERENCE" && meetingNumber }}
+        {{ conferenceInfo.displayName }}
+        {{
+          conferenceInfo.numberType !== "CONFERENCE" &&
+          conferenceInfo.meetingNumber
+        }}
       </span>
       <el-popover
-        v-if="numberType === 'CONFERENCE'"
+        v-if="conferenceInfo.numberType === 'CONFERENCE'"
         placement="bottom"
         width="200"
         trigger="hover"
-        :content="meetingContent"
       >
-        <i class="el-icon-info"></i>
+        <div class="meeting-popover-name" :title="conferenceInfo.displayName">
+          {{ conferenceInfo.displayName }}
+        </div>
+        <div class="meeting-popover-number">
+          会议号：<span class="number">{{ conferenceInfo.meetingNumber }}</span>
+          <span
+            class="copy"
+            id="copyBtn"
+            :data-clipboard-text="conferenceInfo.meetingNumber"
+          >
+            <i class="el-icon-document-copy"></i>
+            复制会议号
+          </span>
+        </div>
+        <i slot="reference" class="el-icon-info"></i>
       </el-popover>
     </span>
-    <Internals
-      v-if="internalsVisible"
-      onClose="() => {
-    setInternalsVisible(false); }"
-    />
+    <Internals v-if="internalsVisible" onClose="closeInternal" />
   </div>
 </template>
 
 <script>
+import ClipboardJS from "clipboard";
+import { Message } from "element-ui";
 import { RECORD_STATE_MAP } from "../../../utils/enum";
+import { throttle } from "../../../utils/index";
 import Internals from "../Internals/index.vue";
+import Timer from "../Timer/index.vue";
 import XYRTC from "../../../utils/xyRTC";
-import {toolbarStore} from '../../../store/index'
+import { useToolbarStore } from "../../../store/index";
 
 export default {
   name: "PromptInfo",
-  props: [
-    "conferenceInfo",
-    "holdInfo"
-  ],
+  props: ["conferenceInfo", "holdInfo"],
   data() {
     return {
       xyRTC: null,
-      level:4,
-      encrypt:'',
+      level: 4,
+      encrypt: "",
       internalsVisible: false,
       visible: false,
+      clipboard: null,
+      toolbarStore: useToolbarStore(),
     };
   },
 
   components: {
     Internals,
+    Timer,
   },
   mounted() {
     this.xyRTC = XYRTC.getInstance();
 
     // 网络状况
     this.xyRTC.on("NetworkIndicatorLevel", this.levelHandler);
+
+    const { encrypt } = this.xyRTC.getStatistics() || {};
+    this.encrypt = encrypt;
+
+    if (this.visible) {
+      this.clipboard = new ClipboardJS("#copyBtn");
+      this.clipboard.on(
+        "success",
+        throttle(() => {
+          Message.success("复制成功", 2);
+        }, 2000)
+      );
+    }
   },
   beforeDestroy() {
     this.xyRTC.off("NetworkIndicatorLevel", this.levelHandler);
   },
   methods: {
     levelHandler(e) {
-      this.level = e
+      this.level = e;
+    },
+    toggleInternal() {
+      this.internalsVisible = true;
+    },
+    closeInternal() {
+      this.internalsVisible = false;
     },
   },
 
@@ -84,12 +112,18 @@ export default {
     showTimer() {
       return RECORD_STATE_MAP.acting === this.recordStatus;
     },
-  },
-  watch:{
-    visible: function (val) {
-      toolbarStore.canHidden = !val
+    signalStyle() {
+      return {
+        "header-signal": true,
+        ["signal_" + this.level]: true,
+      };
     },
-  }
+  },
+  watch: {
+    visible: function (val) {
+      this.toolbarStore.canHidden = !val;
+    },
+  },
 };
 </script>
 
@@ -103,7 +137,7 @@ export default {
   color: #e7e7e7;
   background: $toolbar-bg-color;
   font-size: 13px;
-  z-index: 10;
+  z-index: 100;
   position: fixed;
   top: 0;
   left: 0;

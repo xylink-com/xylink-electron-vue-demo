@@ -1,7 +1,7 @@
 <template>
   <div class="debug">
     <div class="debug__container">
-      <div class="close-icon" @click="props.onClose" />
+      <div class="close-icon" @click="onClose" />
       <h4>网络探测</h4>
       <table class="table" cellPadding="0" cellSpacing="0" border="0">
         <thead>
@@ -16,17 +16,17 @@
         <tbody>
           <tr>
             <td>发送</td>
-            <td>{{ network?.txDetectBw || 0 }}</td>
-            <td>{{ network?.txLost || 0 }}</td>
-            <td>{{ network?.rtt || 0 }}</td>
-            <td>{{ network?.txJitter || 0 }}</td>
+            <td>{{ network.txDetectBw || 0 }}</td>
+            <td>{{ network.txLost || 0 }}</td>
+            <td>{{ network.rtt || 0 }}</td>
+            <td>{{ network.txJitter || 0 }}</td>
           </tr>
           <tr>
             <td>接收</td>
-            <td>{{ network?.rxDetectBw || 0 }}</td>
-            <td>{{ network?.rxLost || 0 }}</td>
-            <td>{{ network?.rtt || 0 }}</td>
-            <td>{{ network?.rxJitter || 0 }}</td>
+            <td>{{ network.rxDetectBw || 0 }}</td>
+            <td>{{ network.rxLost || 0 }}</td>
+            <td>{{ network.rtt || 0 }}</td>
+            <td>{{ network.rxJitter || 0 }}</td>
           </tr>
         </tbody>
       </table>
@@ -37,7 +37,7 @@
         <thead>
           <tr class="table-title">
             <th>加密算法</th>
-            <th>{{ statistics?.encrypt }}</th>
+            <th>{{ statistics ? statistics.encrypt : "" }}</th>
           </tr>
         </thead>
       </table>
@@ -59,7 +59,7 @@
             <tbody>
               <tr
                 :key="'audioTx' + index"
-                v-for="(item, index) in content?.audioTxInfo"
+                v-for="(item, index) in content.audioTxInfo"
               >
                 <td>音频发送</td>
                 <td>{{ item.codecType }}</td>
@@ -69,7 +69,7 @@
               </tr>
               <tr
                 :key="'audioRx' + index"
-                v-for="(item, index) in content?.audioRxInfo"
+                v-for="(item, index) in content.audioRxInfo"
               >
                 <td>音频接收</td>
                 <td>{{ item.codecType }}</td>
@@ -79,7 +79,7 @@
               </tr>
               <tr
                 :key="'videoTx' + index"
-                v-for="(item, index) in content?.videoTxInfo"
+                v-for="(item, index) in content.videoTxInfo"
               >
                 <td>视频发送</td>
                 <td>{{ item.codecType }}</td>
@@ -89,7 +89,7 @@
               </tr>
               <tr
                 :key="'videoRx' + index"
-                v-for="(item, index) in content?.videoRxInfo"
+                v-for="(item, index) in content.videoRxInfo"
               >
                 <td>{{ Base64.decode(item.displayName) }}</td>
                 <td>{{ item.codecType }}</td>
@@ -117,28 +117,40 @@
             </tr>
           </thead>
           <tbody>
-            <tr :key="'audioTx' + index" v-for="(item, index) in audioTxInfo">
+            <tr
+              :key="'audioTx' + index"
+              v-for="(item, index) in people.audioTxInfo"
+            >
               <td>音频发送</td>
               <td>{{ item.codecType }}</td>
               <td>----</td>
               <td>0</td>
               <td>{{ item.actBw }}</td>
             </tr>
-            <tr :key="'audioRx' + index" v-for="(item, index) in audioRxInfo">
+            <tr
+              :key="'audioRx' + index"
+              v-for="(item, index) in people.audioRxInfo"
+            >
               <td>音频接收</td>
               <td>{{ item.codecType }}</td>
               <td>----</td>
               <td>0</td>
               <td>{{ item.actBw }}</td>
             </tr>
-            <tr :key="'videoTx' + index" v-for="(item, index) in videoTxInfo">
+            <tr
+              :key="'videoTx' + index"
+              v-for="(item, index) in people.videoTxInfo"
+            >
               <td>视频发送</td>
               <td>{{ item.codecType }}</td>
               <td>{{ item.resolution }}</td>
               <td>{{ item.frameRate }}</td>
               <td>{{ item.actBw }}</td>
             </tr>
-            <tr :key="'videoRx' + index" v-for="(item, index) in videoRxInfo">
+            <tr
+              :key="'videoRx' + index"
+              v-for="(item, index) in people.videoRxInfo"
+            >
               <td>{{ Base64.decode(item.displayName) }}</td>
               <td>{{ item.codecType }}</td>
               <td>{{ item.resolution }}</td>
@@ -153,15 +165,51 @@
 </template>
 <script>
 import { Fragment } from "vue-fragment";
+import XYRTC from "../../../utils/xyRTC";
 
 export default {
   props: ["onClose"],
   computed: {
-    timerStyle() {
-      return this.timerCount % 2 === 0 ? "icon" : "icon hide";
+    network() {
+      return (
+        this.statistics?.network || {
+          rtt: 0,
+          rxDetectBw: 0,
+          rxJitter: 0,
+          rxLost: 0,
+          txDetectBw: 0,
+          txJitter: 0,
+          txLost: 0,
+        }
+      );
     },
-    timer() {
-      return this.secondToDate(this.timerCount);
+    people() {
+      return (
+        this.statistics?.people || {
+          audioTxInfo: [],
+          audioRxInfo: [],
+          videoRxInfo: [],
+          videoTxInfo: [],
+        }
+      );
+    },
+    content() {
+      return (
+        this.statistics?.content || {
+          audioTxInfo: [],
+          audioRxInfo: [],
+          videoRxInfo: [],
+          videoTxInfo: [],
+        }
+      );
+    },
+    isContent() {
+      return (
+        (this.content?.audioTxInfo || []).length > 0 ||
+        (this.content?.audioRxInfo || []).length > 0 ||
+        (this.content?.videoRxInfo || []).length > 0 ||
+        (this.content?.videoTxInfo || []).length > 0
+      );
     },
   },
   data() {
@@ -173,49 +221,20 @@ export default {
   components: {
     Fragment,
   },
-  watch: {
-    isRecordPaused: function (val, oldVal) {
-      console.log("new: %s, old: %s", val, oldVal);
-      if (oldVal && !val) {
-        this.onCreateMeetingTimeCount();
-      }
-    },
-  },
+  watch: {},
   mounted() {
-    this.onCreateMeetingTimeCount();
+    const xyRTC = XYRTC.getInstance();
+    this.timer = setInterval(() => {
+      this.statistics = xyRTC.getStatistics();
+    }, 500);
   },
   beforeDestroy() {
-    this.meetingTimeout && clearTimeout(this.meetingTimeout);
-    this.meetingTimeout = null;
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
   },
-  methods: {
-    onCreateMeetingTimeCount() {
-      this.meetingTimeout = setTimeout(() => {
-        this.meetingTimeout && clearTimeout(this.meetingTimeout);
-        this.meetingTimeout = null;
-        console.log("this.isRecordPaused", this.isRecordPaused);
-        if (!this.isRecordPaused) {
-          this.timerCount += 1;
-          this.onCreateMeetingTimeCount();
-        }
-      }, 1000);
-    },
-    secondToDate(result) {
-      var h =
-        Math.floor(result / 3600) < 10
-          ? "0" + Math.floor(result / 3600)
-          : Math.floor(result / 3600);
-      var m =
-        Math.floor((result / 60) % 60) < 10
-          ? "0" + Math.floor((result / 60) % 60)
-          : Math.floor((result / 60) % 60);
-      var s =
-        Math.floor(result % 60) < 10
-          ? "0" + Math.floor(result % 60)
-          : Math.floor(result % 60);
-      return h + ":" + m + ":" + s;
-    },
-  },
+  methods: {},
 };
 </script>
 <style scoped lang="scss">
@@ -234,6 +253,18 @@ export default {
 
   h4 {
     color: #fff;
+  }
+
+  .close-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    background: url("../../../assets/img/icon/close.png") no-repeat;
+    background-size: 100% 100%;
+    cursor: pointer;
+    z-index: 999;
   }
 
   &__container {

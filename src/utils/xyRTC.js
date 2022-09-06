@@ -37,7 +37,7 @@ class RTC {
       //   container: {
       //     elementId: 'container',
       //   },
-      // };
+      // };\
       RTC.instance = XYRTC.getXYInstance(instanceConfig);
     }
 

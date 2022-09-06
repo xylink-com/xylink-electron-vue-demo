@@ -22,7 +22,7 @@ export const useToolbarStore = defineStore('toolbar', {
 export const useCallStateStore = defineStore('callState', {
   state: () => {
     return {
-      callState:'calling'
+      callState:'externalLogin'
     }
   }
 });

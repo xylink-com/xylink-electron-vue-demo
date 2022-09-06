@@ -265,6 +265,8 @@ import CloudRecordStatus from "./components/CloudRecordStatus/index.vue";
 import PromptInfo from "./components/PromptInfo/index.vue";
 import MeetingHeader from "./components/Header/index.vue";
 import { useCallStateStore } from "../store/index";
+import path from "path";
+
 const store = new Store();
 
 const message = {
@@ -506,10 +508,15 @@ export default {
       console.log("mounted======================");
     }
 
+    const dllPath =
+      process.env.NODE_ENV === "production"
+        ? path.join(path.dirname(process.execPath), "./dll")
+        : "./dll";
+
     this.xyRTC = XYRTC.getInstance({
       httpProxy: proxy,
       model: this.model,
-      dllPath: "./dll",
+      dllPath,
     });
 
     const version = this.xyRTC.getVersion();

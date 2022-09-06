@@ -25,7 +25,28 @@ export const getScreenInfo = (elementId, nextTemplateRate, offset = [0,0]) => {
     screenInfoObj.rateHeight = clientHeight;
     screenInfoObj.rateWidth = rateWidth;
   }
-  
+
   console.log('getScreenInfo:',screenInfoObj);
   return screenInfoObj;
+};
+/**
+ * 防抖函数
+ *
+ * @param fn Event function
+ * @param wait 等待多少毫秒触发
+ */
+export const throttle = function (fn, wait) {
+  let lastTime = 0;
+
+  return function () {
+    const nowTime = +new Date();
+    // @ts-ignore
+    const context = this;
+    const args = arguments;
+
+    if (nowTime - lastTime > wait || !lastTime) {
+      fn.apply(context, args);
+      lastTime = nowTime;
+    }
+  };
 };

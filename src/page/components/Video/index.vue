@@ -1,6 +1,6 @@
 <template>
-  <div class="wrap-video" :style="item.positionStyle">
-    <div class="video">
+  <div class="wrap-video" :class="{'active-speaker': isActiveSpeaker}" :style="item.positionStyle">
+    <div class="video" @dblclick="toggleForceFullScreen">
       <div class="video-content">
         <div class="video-model">
           <div class="video-bg" v-if="status.isPause">
@@ -56,7 +56,7 @@ import { Render, xyTimer } from "@xylink/xy-electron-sdk";
 
 export default {
   name: "Video",
-  props: ["item", "xyRTC", "renderMap", "isExternal"],
+  props: ["item", "xyRTC", "renderMap", "isExternal", "templateModel","toggleForceFullScreen"],
   data() {
     return {
       videoRenderTimmer: 0, // 视频流渲染定时器
@@ -91,7 +91,7 @@ export default {
     },
   },
   mounted() {
-    const { position, sourceId, id} = this.item;
+    const { position, sourceId, id } = this.item;
 
     this.setPosition(position);
 
@@ -131,6 +131,11 @@ export default {
         ? "audio-muted-status"
         : "audio-unmuted-status";
     },
+    isActiveSpeaker() {
+      return (
+        !!this.item.roster.isActiveSpeaker && this.templateModel === "GALLERY"
+      );
+    },
   },
   methods: {
     // sourceId变化时，需要重新执行setVideoRender方法
@@ -146,8 +151,8 @@ export default {
       }
     },
     setPosition(position) {
-      this.$refs.videoRef.style.width = position.width + 'px';
-      this.$refs.videoRef.style.height = position.height + 'px';
+      this.$refs.videoRef.style.width = position.width + "px";
+      this.$refs.videoRef.style.height = position.height + "px";
 
       const dpr = window.devicePixelRatio || 1;
 
@@ -156,7 +161,7 @@ export default {
     },
     // [external] 外接屏
     externalRender(data) {
-      const { sourceId, roster, id} = data;
+      const { sourceId, roster, id } = data;
       const { state } = roster;
 
       if (!this.videoRenderTimmer && state === 5) {
@@ -215,6 +220,10 @@ export default {
   background: #000;
   user-select: none;
   overflow: hidden;
+}
+
+.wrap-video.active-speaker {
+  border: 2px solid #1890ff;
 }
 
 .video {

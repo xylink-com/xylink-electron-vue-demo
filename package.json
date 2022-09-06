@@ -16,6 +16,7 @@
   "dependencies": {
     "@xylink/xy-electron-sdk": "0.3.1",
     "core-js": "^3.6.5",
+    "electron-log": "^4.4.8",
     "element-ui": "^2.13.2",
     "vue": "^2.6.12",
     "vue-router": "^3.5.1"

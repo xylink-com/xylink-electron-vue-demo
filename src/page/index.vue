@@ -320,6 +320,7 @@ export default {
       video: "muteVideo",
       meetingStore: useCallStateStore(),
       disableAudio: false,
+      handStatus: false, // 举手状态
       conferenceInfo: {},
       confMgmtUrl: "",
       holdInfo: {},
@@ -401,13 +402,13 @@ export default {
       let audioStatus = "静音";
 
       if (this.audio === "unmute") {
-        audioStatus = "静音";
-      } else if (this.audio === "mute" && this.disableAudio) {
-        audioStatus = "强制静音";
-
-        disabledMute = "disabled_mute";
-      } else if (this.audio === "mute" && !this.disableAudio) {
-        audioStatus = "取消静音";
+        audioStatus = this.disableAudio ? "结束发言" : "静音";
+      } else if (this.audio === "mute") {
+        if (this.disableAudio) {
+          audioStatus = this.handStatus ? "取消举手" : "举手发言";
+        } else {
+          audioStatus = "取消静音";
+        }
       }
 
       const className = `button ${audioClass} ${disabledMute}`;
@@ -511,7 +512,7 @@ export default {
     const dllPath =
       process.env.NODE_ENV === "production"
         ? path.join(path.dirname(process.execPath), "./dll")
-        : "./dll";
+        : "node_modules/@xylink/xy-electron-sdk/dll";
 
     this.xyRTC = XYRTC.getInstance({
       httpProxy: proxy,
@@ -642,6 +643,11 @@ export default {
       this.shareContentStatus = e;
     });
 
+    // 会控取消举手 回调
+    this.xyRTC.on("ConfHandupCancelled", () => {
+      this.handStatus = false;
+    });
+
     // local 音频状态
     this.xyRTC.on("AudioStatusChanged", (e) => {
       console.log("local audio status changed: ", e);
@@ -670,7 +676,7 @@ export default {
     // 可以通过此消息获取：会控播放地址/主会场callUri/麦克风状态/是否是强制静音麦克风
     // 自定义布局模式下，主会场callUri需要记录下来，后续requestLayout计算需要使用
     this.xyRTC.on("ConfControl", (e) => {
-      console.log("metting control message: ", e);
+      console.log("meeting control message: ", e);
 
       const {
         disableMute,
@@ -681,10 +687,25 @@ export default {
         confMgmtUrl,
       } = e;
       this.disableAudio = disableMute;
-      if (muteMic === "mute") {
-        this.audio = "mute";
-      } else if (muteMic === "unmute") {
-        this.audio = "unmute";
+
+      let info = "";
+
+      if (muteMic === "mute" && disableMute) {
+        info = "主持人已强制静音，如需发言，请点击“举手发言”";
+
+        this.handStatus = false;
+      } else if (muteMic === "mute" && !disableMute) {
+        info = "您已被主持人静音";
+      } else if (muteMic === "unmute" && disableMute) {
+        info = "主持人已允许您发言";
+        this.handStatus = false;
+      } else if (muteMic === "unmute" && !disableMute) {
+        info = "您已被主持人取消静音";
+      }
+
+      // 在等候室时，不做提示
+      if (!this.holdInfo.isOnhold && info) {
+        message.info(info);
       }
 
       // 会控控制录制权限
@@ -939,20 +960,49 @@ export default {
       const withDesktopAudio = store.get("xyWithDesktopAudio") || false;
       this.xyRTC.startSendContent(withDesktopAudio);
     },
-    audioOperate() {
-      if (this.audio === "mute" && this.disableAudio) {
+
+    // 麦克风操作
+    async onAudioOperate() {
+      try {
+        if (this.audio === "unmute") {
+          this.audio = "mute";
+          message.info("麦克风已静音");
+
+          this.xyRTC.muteMic(true);
+        } else {
+          this.audio = "unmute";
+          this.xyRTC.muteMic(false);
+        }
+      } catch (err) {
+        message.info("操作失败");
+      }
+    },
+    // 麦克风操作
+    async audioOperate() {
+      if (this.audio === "mute" && this.disableAudio && !this.handStatus) {
+        this.xyRTC.sendSpeakingRequest();
+
+        this.handStatus = true;
+        message.info("发言请求已发送");
+
         return;
       }
 
-      if (this.audio === "unmute") {
-        this.audio = "mute";
-        message.info("麦克风已静音");
+      if (this.audio === "mute" && this.disableAudio && this.handStatus) {
+        this.xyRTC.cancelSpeakingRequest();
 
-        this.xyRTC.muteMic(true);
-      } else {
-        this.audio = "unmute";
-        this.xyRTC.muteMic(false);
+        this.handStatus = false;
+        return;
       }
+
+      if (this.audio === "unmute" && this.disableAudio) {
+        this.xyRTC.sendSpeakingEnd();
+
+        this.handStatus = false;
+        return;
+      }
+
+      this.onAudioOperate();
     },
     videoOperate() {
       if (this.video === "unmuteVideo") {

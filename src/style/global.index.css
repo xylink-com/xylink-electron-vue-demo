@@ -183,11 +183,11 @@ input {
 
 .meeting-content {
   width: 100vw;
-  height: calc(100vh - 92px);
+  height: calc(100vh - 90px);
   z-index: 10;
   overflow: hidden;
   position: fixed;
-  top: 32px;
+  top: 30px;
   left: 0;
   background-color: #0d0f14;
   font-size: 12px;
@@ -461,7 +461,7 @@ input {
 
 
  /* 云端录制 */
- 
+
  .meeting-footer .record .icon {
   background: url("./img/operate/record-normal.png") center center no-repeat;
   background-size: contain;

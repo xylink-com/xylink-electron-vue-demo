@@ -1852,10 +1852,10 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@xylink/xy-electron-sdk@^0.3.2-beta.1":
-  version "0.3.2-beta.1"
-  resolved "https://fe-private-npm.xylink.com/@xylink%2fxy-electron-sdk/-/xy-electron-sdk-0.3.2-beta.1.tgz#d2b923c61428e88902cf74ace9acd79f78b78c8f"
-  integrity sha512-4zELcJOySkv+OBzS2lZVMsWmgWd+Y/+orXiST2uaqtqQiqvaQewMeVkwyiHHVT1cDQyhSdjsdRj+6QTuu/1yXw==
+"@xylink/xy-electron-sdk@^0.3.2-beta.2":
+  version "0.3.2-beta.2"
+  resolved "https://fe-private-npm.xylink.com/@xylink%2fxy-electron-sdk/-/xy-electron-sdk-0.3.2-beta.2.tgz#9022b599b07e1aed318d2ba3364cd9d09ab2c77b"
+  integrity sha512-y+ABWk0azL+EDkKHrJfgDURD9E4N7uGq6dui2aDKVqxx1Ezy08F+c3nbUo+jXbbBaz7CzX2qLEx1MiMosScfiA==
   dependencies:
     download "^8.0.0"
     semver "^7.3.2"
@@ -3128,7 +3128,7 @@ cli-width@^3.0.0:
   resolved "https://registry.yarnpkg.com/cli-width/-/cli-width-3.0.0.tgz#a2f48437a2caa9a22436e794bf071ec9e61cedf6"
   integrity sha512-FxqpkPPwu1HjuN93Omfm4h8uIanXofW0RxVEW3k5RKx+mJJYSthzNhp32Kzxxy3YAEZ/Dc/EWN1vZRY0+kOhbw==
 
-clipboard@^2.0.11:
+clipboard@^2.0.0:
   version "2.0.11"
   resolved "https://fe-private-npm.xylink.com/clipboard/-/clipboard-2.0.11.tgz#62180360b97dd668b6b3a84ec226975762a70be5"
   integrity sha512-C+0bbOqkezLIsmWSvlsXS0Q0bmkugu7jcfMIACB+RDEntIzQIkdr148we28AfSloQLRdZlYL/QYyrq05j/3Faw==
@@ -6635,6 +6635,11 @@ js-base64@^2.1.8:
   version "2.6.4"
   resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-2.6.4.tgz#f4e686c5de1ea1f867dbcad3d46d969428df98c4"
   integrity sha512-pZe//GGmwJndub7ZghVHz7vjb2LgC1m8B07Au3eYqeqv9emhESByMXxaEgkUkEqJe87oBbSniGYoQNIBklc7IQ==
+
+js-base64@^3.7.2:
+  version "3.7.2"
+  resolved "https://fe-private-npm.xylink.com/js-base64/-/js-base64-3.7.2.tgz#816d11d81a8aff241603d19ce5761e13e41d7745"
+  integrity sha1-gW0R2BqK/yQWA9Gc5XYeE+Qdd0U=
 
 js-message@1.0.7:
   version "1.0.7"
@@ -10950,6 +10955,13 @@ vue-cli-plugin-element@~1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/vue-cli-plugin-element/-/vue-cli-plugin-element-1.0.1.tgz#34e58fb65b36cf59afaf14f503288e5e578b1554"
   integrity sha512-OJSOnJtn7f1v/8xX+MJae+RrE8WguhiiG9QTBx/MNOPXYsxqut6Ommo+ZD3raNc7eryhqdM2T/DlMfdvIKpCtw==
+
+vue-clipboard2@^0.3.3:
+  version "0.3.3"
+  resolved "https://fe-private-npm.xylink.com/vue-clipboard2/-/vue-clipboard2-0.3.3.tgz#331fec85f9d4f175eb0d4feaef4d77338562af36"
+  integrity sha1-Mx/shfnU8XXrDU/q7013M4VirzY=
+  dependencies:
+    clipboard "^2.0.0"
 
 vue-demi@*:
   version "0.13.11"

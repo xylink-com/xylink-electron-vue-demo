@@ -2,27 +2,27 @@
   <div class="meeting-header">
     <span class="header-time">
       <div :class="signalStyle" @click="toggleInternal" />
-      <el-tooltip class="item" effect="dark" placement="left-end">
+      <el-tooltip class="item" placement="bottom-end">
         <div slot="content">已经使用{{ encrypt }}加密</div>
         <span class="icon-encrypt" />
       </el-tooltip>
-
-      <Timer v-if="!holdInfo.isOnhold" />
+      <Timer v-if="!isOnhold" />
     </span>
 
     <span class="header-conference">
       <span class="header-conference-name">
         {{ conferenceInfo.displayName }}
-        {{
-          conferenceInfo.numberType !== "CONFERENCE" &&
+        <Fragment v-if="conferenceInfo.numberType !== 'CONFERENCE'">{{
           conferenceInfo.meetingNumber
-        }}
+        }}</Fragment>
       </span>
+      &nbsp;&nbsp;
       <el-popover
         v-if="conferenceInfo.numberType === 'CONFERENCE'"
         placement="bottom"
-        width="200"
+        width="360"
         trigger="hover"
+        popper-class="meeting-popover"
       >
         <div class="meeting-popover-name" :title="conferenceInfo.displayName">
           {{ conferenceInfo.displayName }}
@@ -30,9 +30,10 @@
         <div class="meeting-popover-number">
           会议号：<span class="number">{{ conferenceInfo.meetingNumber }}</span>
           <span
+            v-clipboard:copy="conferenceInfo.meetingNumber"
+            v-clipboard:success="onCopySuccess"
+            v-clipboard:error="onCopyError"
             class="copy"
-            id="copyBtn"
-            :data-clipboard-text="conferenceInfo.meetingNumber"
           >
             <i class="el-icon-document-copy"></i>
             复制会议号
@@ -41,20 +42,19 @@
         <i slot="reference" class="el-icon-info"></i>
       </el-popover>
     </span>
-    <Internals v-if="internalsVisible" onClose="closeInternal" />
+    <Internals v-if="internalsVisible" :onClose="closeInternal" />
   </div>
 </template>
 
 <script>
-import ClipboardJS from "clipboard";
+import { Fragment } from "vue-fragment";
+
 import { Message } from "element-ui";
 import { RECORD_STATE_MAP } from "../../../utils/enum";
-import { throttle } from "../../../utils/index";
 import Internals from "../Internals/index.vue";
 import Timer from "../Timer/index.vue";
 import XYRTC from "../../../utils/xyRTC";
 import { useToolbarStore } from "../../../store/index";
-
 export default {
   name: "PromptInfo",
   props: ["conferenceInfo", "holdInfo"],
@@ -73,6 +73,7 @@ export default {
   components: {
     Internals,
     Timer,
+    Fragment,
   },
   mounted() {
     this.xyRTC = XYRTC.getInstance();
@@ -82,16 +83,6 @@ export default {
 
     const { encrypt } = this.xyRTC.getStatistics() || {};
     this.encrypt = encrypt;
-
-    if (this.visible) {
-      this.clipboard = new ClipboardJS("#copyBtn");
-      this.clipboard.on(
-        "success",
-        throttle(() => {
-          Message.success("复制成功", 2);
-        }, 2000)
-      );
-    }
   },
   beforeDestroy() {
     this.xyRTC.off("NetworkIndicatorLevel", this.levelHandler);
@@ -106,6 +97,15 @@ export default {
     closeInternal() {
       this.internalsVisible = false;
     },
+    onCopySuccess() {
+      Message({
+        message: "复制成功",
+        type: "success",
+      });
+    },
+    onCopyError() {
+      console.log("errro");
+    },
   },
 
   computed: {
@@ -118,6 +118,10 @@ export default {
         ["signal_" + this.level]: true,
       };
     },
+    isOnhold(){
+      console.log('this.holdInfo.isOnhold',this.holdInfo.isOnhold)
+      return this.holdInfo.isOnhold
+    }
   },
   watch: {
     visible: function (val) {
@@ -137,7 +141,7 @@ export default {
   color: #e7e7e7;
   background: $toolbar-bg-color;
   font-size: 13px;
-  z-index: 100;
+  z-index: 1001;
   position: fixed;
   top: 0;
   left: 0;
@@ -215,38 +219,13 @@ export default {
 }
 
 .meeting-popover {
+  width: 360px;
+  height: 80px;
   top: 26px !important;
   z-index: 999;
-  .ant-popover-arrow {
-    display: none;
-  }
-  .ant-popover-inner {
-    width: 360px;
-    height: 80px;
-    background: #ffffff;
-    box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.26);
-    font-size: 12px;
-    .ant-popover-inner-content {
-      padding: 14px 16px;
-    }
-  }
-  .upload-icon {
-    position: absolute;
-    right: 12px;
-    top: 16px;
-    cursor: pointer;
-    .svg-icon {
-      width: 16px;
-      height: 16px;
-      fill-opacity: 0.8;
-      fill: #393946;
-    }
-    &:hover {
-      .svg-icon {
-        fill-opacity: 0.6;
-      }
-    }
-  }
+  background: #ffffff;
+  box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.26);
+  font-size: 12px;
   &-name {
     font-size: 14px;
     color: #393946;

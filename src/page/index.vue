@@ -81,8 +81,8 @@
             ></el-input>
 
             <div class="text">
-              <el-checkbox v-model="unmuteCamera">开启摄像头</el-checkbox>
-              <el-checkbox v-model="unmuteMic">开启麦克风</el-checkbox>
+              <el-checkbox v-model="info.video">开启摄像头</el-checkbox>
+              <el-checkbox v-model="info.audio">开启麦克风</el-checkbox>
             </div>
             <div>
               <el-button class="xy__login-btn" type="primary" @click="makeCall"
@@ -112,13 +112,13 @@
         </div>
       </div>
 
-      <div v-if="meetingStore.callState === 'meeting'">
-        <MeetingHeader
-          v-if="meetingStore.callState === 'meeting'"
-          :conferenceInfo="conferenceInfo"
-          :holdInfo="holdInfo"
-        />
+      <MeetingHeader
+        v-if="meetingStore.callState === 'meeting'"
+        :conferenceInfo="conferenceInfo"
+        :holdInfo="holdInfo"
+      />
 
+      <div v-if="meetingStore.callState === 'meeting' && !holdInfo.isOnhold">
         <div class="meeting-content">
           <PromptInfo
             :recordPermission="recordPermission"
@@ -169,7 +169,7 @@
             <div @click="openMeetingControlWin" class="button layout">
               <div class="icon"></div>
               <div class="title">
-                主持会议({{ cacheConfInfo.visibleEpCount || 1 }})
+                参会者({{ cacheConfInfo.visibleEpCount || 1 }})
               </div>
             </div>
 
@@ -227,6 +227,12 @@
               <div class="icon"></div>
               <div class="title">设置</div>
             </div>
+            <NmberKeyBoard #keyBoardBtn="{ open }">
+              <div class="button setting" @click="open">
+                <div class="icon"></div>
+                <div class="title">键盘</div>
+              </div>
+            </NmberKeyBoard>
 
             <div @click="sendExternalMsg" class="button setting">
               <div class="icon"></div>
@@ -243,6 +249,11 @@
           </div>
         </div>
       </div>
+      <Hold
+        v-if="holdInfo.isOnhold"
+        :conferenceInfo="conferenceInfo"
+        :stopMeeting="hangup"
+      />
     </div>
   </div>
 </template>
@@ -261,9 +272,10 @@ import Video from "./components/Video/index.vue";
 import SettingModal from "./components/Modal/index.vue";
 import InOutReminder from "./components/InOutReminder/index.vue";
 import Barrage from "./components/Barrage/index.vue";
-import CloudRecordStatus from "./components/CloudRecordStatus/index.vue";
 import PromptInfo from "./components/PromptInfo/index.vue";
 import MeetingHeader from "./components/Header/index.vue";
+import NmberKeyBoard from "./components/NumberKeyBoard/index.vue";
+import Hold from "./components/Hold/index.vue";
 import { useCallStateStore } from "../store/index";
 import path from "path";
 
@@ -276,7 +288,7 @@ const message = {
 };
 const proxy = store.get("xyHttpProxy") || DEFAULT_PROXY;
 const env = String(proxy).split(".")[0] || "cloud";
-const MODEL = store.get("xyLayoutModel") || "custom";
+const MODEL = store.get("xyLayoutModel") || "CUSTOM";
 
 const maxSize = 4;
 const defaultPageInfo = {
@@ -293,9 +305,10 @@ export default {
     SettingModal,
     Barrage,
     InOutReminder,
-    CloudRecordStatus,
     PromptInfo,
     MeetingHeader,
+    NmberKeyBoard,
+    Hold,
   },
   data() {
     return {
@@ -329,11 +342,11 @@ export default {
       model: MODEL,
       modelList: [
         {
-          value: "auto",
+          value: "AUTO",
           label: "自动布局",
         },
         {
-          value: "custom",
+          value: "CUSTOM",
           label: "自定义布局",
         },
       ],
@@ -354,10 +367,12 @@ export default {
       isRecordPaused: false, // 其它端是否录制暂停中
       recordPermission: {
         // 录制权限相关
-        isStartRecord: false, // 是否其他人已经开启录制
+        isStartRecord: false, // 是否其他人已经开始录制
         canRecord: true, // 录制开关
         confCanRecord: true, // 会控中开启关闭录制权限
       },
+      unmuteCamera: false,
+      unmuteMic: false
     };
   },
   computed: {
@@ -449,7 +464,7 @@ export default {
     recordText() {
       return this.recordStatus === RECORD_STATE_MAP.acting
         ? "停止录制"
-        : "开启录制";
+        : "开始录制";
     },
     recordTipStatus() {
       return !(
@@ -472,7 +487,7 @@ export default {
       return contentInfo;
     },
     disabledPage() {
-      if (this.model === "custom") {
+      if (this.model === "CUSTOM") {
         return false;
       }
 
@@ -489,21 +504,7 @@ export default {
         participantCount === 1
       );
     },
-    unmuteCamera() {
-      return !this.info.muteVideo;
-    },
-    unmuteMic() {
-      return !this.info.muteAudio;
-    },
   },
-  // watch: {
-  //   cacheConfInfo: {
-  //     handler(newVal,oldVal) {
-
-  //     },
-  //     deep: true,
-  //   },
-  // },
   mounted() {
     if (this.xyRTC) {
       console.log("mounted======================");
@@ -586,7 +587,7 @@ export default {
 
     // video streams change event
     this.xyRTC.on("VideoStreams", (e) => {
-      if (this.model === "custom") {
+      if (this.model === "CUSTOM") {
         // 每次推送都会携带local数据，如果分页不需要展示，则移除local数据
         if (this.cachePageInfo.currentPage !== 0) {
           const localIndex = e.findIndex(
@@ -727,7 +728,7 @@ export default {
 
       this.cacheConfInfo = { ...e };
 
-      if (this.model === "auto") {
+      if (this.model === "AUTO") {
         // 自动布局内部计算了layout请流，不需要外部处理
         return;
       }
@@ -800,10 +801,10 @@ export default {
       }
     });
 
-    // 自己开启录制状态改变
+    // 自己开始录制状态改变
     this.xyRTC.on("RecordingStateChanged", (e) => {
       // 本地开启关闭录制后，RecordStatusNotification没有最后一次上报，因此只能手动处理了
-      // RecordingStateChanged触发，远端肯定没有开启录制
+      // RecordingStateChanged触发，远端肯定没有开始录制
       this.recordPermission = {
         ...this.recordPermission,
         isStartRecord: false,
@@ -862,7 +863,7 @@ export default {
     },
     makeCall() {
       // 登录&连接服务器成功，可以入会
-      const { meeting, meetingPassword, meetingName, muteVideo, muteAudio } =
+      const { meeting, meetingPassword, meetingName, video, audio } =
         this.info;
 
       if (!meeting || !meetingName) {
@@ -876,15 +877,15 @@ export default {
         meeting,
         meetingPassword,
         meetingName,
-        muteVideo,
-        muteAudio
+        !video,
+        !audio
       );
 
       if (result.code === 3002) {
         message.info("请登录后发起呼叫");
       } else {
-        this.video = this.info.muteVideo ? "muteVideo" : "unmuteVideo";
-        this.audio = this.info.muteAudio ? "mute" : "unmute";
+        this.video = this.info.video ? "unmuteVideo" : "muteVideo";
+        this.audio = this.info.audio ? "unmute" : "mute";
 
         this.meetingStore.callState = "calling";
       }
@@ -957,8 +958,7 @@ export default {
         return;
       }
 
-      const withDesktopAudio = store.get("xyWithDesktopAudio") || false;
-      this.xyRTC.startSendContent(withDesktopAudio);
+      this.xyRTC.startSendContent(true);
     },
 
     // 麦克风操作
@@ -1139,7 +1139,7 @@ export default {
     switchPage(type) {
       console.log("cachePageInfo: ", this.cachePageInfo);
 
-      if (this.model === "auto") {
+      if (this.model === "AUTO") {
         const { currentPage } = this.pageInfo;
         const targetPage =
           type === "next"

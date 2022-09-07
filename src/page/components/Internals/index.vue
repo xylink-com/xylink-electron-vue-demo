@@ -166,7 +166,7 @@
 <script>
 import { Fragment } from "vue-fragment";
 import XYRTC from "../../../utils/xyRTC";
-
+import { Base64 } from 'js-base64';
 export default {
   props: ["onClose"],
   computed: {
@@ -216,6 +216,7 @@ export default {
     return {
       statistics: null,
       timer: null,
+      Base64
     };
   },
   components: {
@@ -233,8 +234,7 @@ export default {
       clearInterval(this.timer);
       this.timer = null;
     }
-  },
-  methods: {},
+  }
 };
 </script>
 <style scoped lang="scss">

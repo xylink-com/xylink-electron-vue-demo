@@ -1,7 +1,5 @@
 <template>
-  <Fragment>
-    {{ timer }}
-  </Fragment>
+    <span>{{ timer }}</span>
 </template>
 <script>
 import { Fragment } from "vue-fragment";

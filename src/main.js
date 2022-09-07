@@ -5,7 +5,9 @@ import router from "./router";
 import "./plugins/element.js";
 import "./style/global.index.css";
 import { createPinia, PiniaVuePlugin } from 'pinia';
+import VueClipboard from 'vue-clipboard2'
 
+Vue.use(VueClipboard);
 Vue.use(PiniaVuePlugin);
 Vue.use(VueRouter);
 Vue.config.productionTip = false;

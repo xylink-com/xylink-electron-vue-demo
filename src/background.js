@@ -163,7 +163,6 @@ function createWindow() {
             enableRemoteModule: true,
           },
           title: "小鱼Electron 外接屏幕",
-          icon: path.join(__static, "logo.png"),
         });
 
         if (isDevelopment) {

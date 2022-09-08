@@ -1260,14 +1260,12 @@ export default {
     },
     openMeetingControlWin() {
       // 会控链接
-      // const { pc } = this.xyRTC.getConfMgmtUrl();
-      const pc = this.confMgmtUrl;
-      console.log("pc", pc);
+      const { members } = this.xyRTC.getConfMgmtUrl();
 
       const { meetingNumber = "" } = this.conferenceInfo;
 
-      if (pc) {
-        ipcRenderer.send("meetingControlWin", { url: pc, meetingNumber });
+      if (members) {
+        ipcRenderer.send("meetingControlWin", { url: members, meetingNumber });
       }
     },
   },

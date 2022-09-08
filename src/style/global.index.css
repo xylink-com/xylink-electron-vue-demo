@@ -286,25 +286,25 @@ input {
 .meeting-footer .previous .icon {
   background: url("./img/svg/previous.svg") center center no-repeat;
   background-size: contain;
-  width: 24px;
+  width: 22px;
 }
 
 .meeting-footer .previous:hover .icon {
   background: url("./img/svg/previous_hover.svg") center center no-repeat;
   background-size: contain;
-  width: 24px;
+  width: 22px;
 }
 
 .meeting-footer .next .icon {
   background: url("./img/svg/next.svg") center center no-repeat;
   background-size: contain;
-  width: 24px;
+  width: 22px;
 }
 
 .meeting-footer .next:hover .icon {
   background: url("./img/svg/next_hover.svg") center center no-repeat;
   background-size: contain;
-  width: 24px;
+  width: 22px;
 }
 
 .meeting-footer .layout .icon {

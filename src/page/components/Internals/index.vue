@@ -121,6 +121,7 @@
               :key="'audioTx' + index"
               v-for="(item, index) in people.audioTxInfo"
             >
+              <td></td>
               <td>音频发送</td>
               <td>{{ item.codecType }}</td>
               <td>----</td>
@@ -131,6 +132,7 @@
               :key="'audioRx' + index"
               v-for="(item, index) in people.audioRxInfo"
             >
+             <td></td>
               <td>音频接收</td>
               <td>{{ item.codecType }}</td>
               <td>----</td>
@@ -141,6 +143,7 @@
               :key="'videoTx' + index"
               v-for="(item, index) in people.videoTxInfo"
             >
+             <td></td>
               <td>视频发送</td>
               <td>{{ item.codecType }}</td>
               <td>{{ item.resolution }}</td>
@@ -152,6 +155,7 @@
               v-for="(item, index) in people.videoRxInfo"
             >
               <td>{{ Base64.decode(item.displayName) }}</td>
+              <td>视频接收</td>
               <td>{{ item.codecType }}</td>
               <td>{{ item.resolution }}</td>
               <td>{{ item.frameRate }}</td>

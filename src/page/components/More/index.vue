@@ -3,7 +3,7 @@
       :value="visible"
       placement="top"
       width="102"
-      trigger="click"
+      trigger="hover"
       popper-class="more-select-popover"
     >
       <slot name="more" :closeMore="close"></slot>
@@ -33,7 +33,7 @@ export default {
 };
 </script>
 <style lang="scss">
-@import "../../../assets/style/var.scss";
+@import "../../../style/var.scss";
 .el-popover__reference-wrapper{
   outline: none;
 }

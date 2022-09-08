@@ -132,7 +132,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "../../../assets/style/var.scss";
+@import "../../../style/var.scss";
 
 .meeting-header {
   width: 100%;
@@ -169,14 +169,14 @@ export default {
   .icon-encrypt {
     width: 19px;
     height: 19px;
-    background: url("../../../assets/img/icon/icon_encrypt.png") no-repeat;
+    background: url("../../../style/img/icon_encrypt.png") no-repeat;
     background-size: 100% 100%;
     cursor: pointer;
     -webkit-app-region: no-drag;
     margin-right: 10px;
 
     &:hover {
-      background: url("../../../assets/img/icon/icon_encrypt_hover.png")
+      background: url("../../../style/img/icon_encrypt_hover.png")
         no-repeat;
       background-size: 100% 100%;
     }
@@ -265,7 +265,7 @@ $signalType: "1", "2", "3", "4";
     display: block;
     width: 16px;
     height: 16px;
-    background: url("../../../assets/img/signal/signal_#{$type}.png") no-repeat;
+    background: url("../../../style/img/signal/signal_#{$type}.png") no-repeat;
     background-size: 100% 100%;
   }
 }

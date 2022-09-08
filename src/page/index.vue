@@ -222,34 +222,11 @@
                 <NmberKeyBoard #keyBoardBtn="{ open }">
                   <dd @click="open">键盘</dd>
                 </NmberKeyBoard>
-                <dd @click="sendExternalMsg">
+                <!-- <dd @click="sendExternalMsg">
                   {{ isExternal ? "关闭外接" : "打开外接" }}
-                </dd>
+                </dd> -->
                 <dd @click="toggleProxyModal">设置</dd>
               </dl>
-              <!-- <div @click="switchCallMode" class="button setting">
-                <div class="icon"></div>
-                <div class="title">
-                  {{ callMode === "AudioOnly" ? "退出语音模式" : "语音模式" }}
-                </div>
-              </div>
-              <div @click="toggleProxyModal" class="button setting">
-                <div class="icon"></div>
-                <div class="title">设置</div>
-              </div>
-              <NmberKeyBoard #keyBoardBtn="{ open }">
-                <div class="button setting" @click="open">
-                  <div class="icon"></div>
-                  <div class="title">键盘</div>
-                </div>
-              </NmberKeyBoard>
-
-              <div @click="sendExternalMsg" class="button setting">
-                <div class="icon"></div>
-                <div class="title">
-                  {{ isExternal ? "关闭外接" : "打开外接" }}
-                </div>
-              </div> -->
             </More>
           </div>
           <div class="right">

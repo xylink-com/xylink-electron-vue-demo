@@ -31,7 +31,7 @@ export default {
 };
 </script>
 <style scoped lang="scss">
-@import "../../../assets/style/var.scss";
+@import "../../../style/var.scss";
 
 .title-line {
   width: 64px;
@@ -47,7 +47,7 @@ export default {
   height: calc(100% - 30px);
   top: 30px;
   padding: 0 56px;
-  background: #000 url("../../../assets/img/meeting_bg.png") 0 0 no-repeat;
+  background: #000 url("../../../style/img/meeting_bg.png") 0 0 no-repeat;
   background-size: cover;
   color: #fff;
   overflow: hidden;

@@ -261,7 +261,7 @@ export default {
     right: 10px;
     width: 22px;
     height: 22px;
-    background: url("../../../assets/img/icon/close.png") no-repeat;
+    background: url("../../../style/img/close.png") no-repeat;
     background-size: 100% 100%;
     cursor: pointer;
     z-index: 999;

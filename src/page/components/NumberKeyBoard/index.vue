@@ -66,7 +66,7 @@ export default {
 };
 </script>
 <style lang="scss">
-@import "@/assets/style/var.scss";
+@import "../../../style/var.scss";
 
 .keyboard {
   &-modal {

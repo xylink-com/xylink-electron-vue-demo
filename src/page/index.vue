@@ -152,12 +152,12 @@
 
         <div class="meeting-footer">
           <div class="middle">
-            <div @click="switchPage('previous')" class="button layout">
+            <div @click="switchPage('previous')" class="button previous">
               <div class="icon"></div>
               <div class="title">上一页（{{ pageInfo.currentPage }}）</div>
             </div>
 
-            <div @click="switchPage('next')" class="button layout">
+            <div @click="switchPage('next')" class="button next">
               <div class="icon"></div>
               <div class="title">下一页</div>
             </div>
@@ -166,7 +166,7 @@
               <div class="icon"></div>
               <div class="title">窗口布局</div>
             </div>
-            <div @click="openMeetingControlWin" class="button layout">
+            <div @click="openMeetingControlWin" class="button meeting_host">
               <div class="icon"></div>
               <div class="title">
                 参会者({{ cacheConfInfo.visibleEpCount || 1 }})
@@ -194,7 +194,6 @@
             </div>
 
             <div
-              v-if="callMode === 'AudioVideo'"
               @click="videoOperate"
               :class="videoOperateClass"
             >
@@ -215,31 +214,20 @@
 
               <div class="title">{{ audioStatus.status }}</div>
             </div>
-
-            <div @click="switchCallMode" class="button setting">
-              <div class="icon"></div>
-              <div class="title">
-                {{ callMode === "AudioOnly" ? "退出语音模式" : "语音模式" }}
-              </div>
-            </div>
-
-            <div @click="toggleProxyModal" class="button setting">
-              <div class="icon"></div>
-              <div class="title">设置</div>
-            </div>
-            <NmberKeyBoard #keyBoardBtn="{ open }">
-              <div class="button setting" @click="open">
-                <div class="icon"></div>
-                <div class="title">键盘</div>
-              </div>
-            </NmberKeyBoard>
-
-            <div @click="sendExternalMsg" class="button setting">
-              <div class="icon"></div>
-              <div class="title">
-                {{ isExternal ? "关闭外接" : "打开外接" }}
-              </div>
-            </div>
+            <More #more="{ closeMore }">
+              <dl class="more-select" @click="closeMore">
+                <dd @click="switchCallMode">
+                  {{ callMode === "AudioOnly" ? "退出语音模式" : "语音模式" }}
+                </dd>
+                <NmberKeyBoard #keyBoardBtn="{ open }">
+                  <dd @click="open">键盘</dd>
+                </NmberKeyBoard>
+                <!-- <dd @click="sendExternalMsg">
+                  {{ isExternal ? "关闭外接" : "打开外接" }}
+                </dd> -->
+                <dd @click="toggleProxyModal">设置</dd>
+              </dl>
+            </More>
           </div>
           <div class="right">
             <div class="button end_call" @click="hangup">
@@ -276,6 +264,7 @@ import PromptInfo from "./components/PromptInfo/index.vue";
 import MeetingHeader from "./components/Header/index.vue";
 import NmberKeyBoard from "./components/NumberKeyBoard/index.vue";
 import Hold from "./components/Hold/index.vue";
+import More from "./components/More/index.vue";
 import { useCallStateStore } from "../store/index";
 import path from "path";
 
@@ -309,6 +298,7 @@ export default {
     MeetingHeader,
     NmberKeyBoard,
     Hold,
+    More,
   },
   data() {
     return {
@@ -372,7 +362,7 @@ export default {
         confCanRecord: true, // 会控中开启关闭录制权限
       },
       unmuteCamera: false,
-      unmuteMic: false
+      unmuteMic: false,
     };
   },
   computed: {
@@ -404,11 +394,13 @@ export default {
       return layoutStyle;
     },
     videoOperateClass() {
-      let classList = "button ";
 
-      classList += this.video === "unmuteVideo" ? "camera" : "mute_camera";
-
-      return classList;
+      return {
+        button:true,
+        camera: this.video === "unmuteVideo",
+        mute_camera: this.video !== "unmuteVideo",
+        'disabled-button': this.callMode === 'AudioOnly'
+      }
     },
     audioStatus() {
       const audioClass = this.audio === "unmute" ? "mic_aec" : "mute_mic";
@@ -863,8 +855,7 @@ export default {
     },
     makeCall() {
       // 登录&连接服务器成功，可以入会
-      const { meeting, meetingPassword, meetingName, video, audio } =
-        this.info;
+      const { meeting, meetingPassword, meetingName, video, audio } = this.info;
 
       if (!meeting || !meetingName) {
         message.info("请填写入会信息");
@@ -1005,6 +996,9 @@ export default {
       this.onAudioOperate();
     },
     videoOperate() {
+      if(this.callMode === 'AudioOnly'){
+        return;
+      }
       if (this.video === "unmuteVideo") {
         this.video = "muteVideo";
 

@@ -1,6 +1,6 @@
 {
   "name": "xy-electron-vue-demo",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "electron sdk vue",
   "license": "MIT",
@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development vue-cli-service electron:serve",
     "build:32": "cross-env NODE_ENV=production vue-cli-service electron:build --win --ia32",
+    "build:mac": "cross-env NODE_ENV=production vue-cli-service electron:build --mac",
     "lint": "vue-cli-service lint",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"

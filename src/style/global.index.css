@@ -283,6 +283,29 @@ input {
 .meeting-footer .disabled_mute:hover .title {
   color: inherit !important;
 }
+.meeting-footer .previous .icon {
+  background: url("./img/svg/previous.svg") center center no-repeat;
+  background-size: contain;
+  width: 24px;
+}
+
+.meeting-footer .previous:hover .icon {
+  background: url("./img/svg/previous_hover.svg") center center no-repeat;
+  background-size: contain;
+  width: 24px;
+}
+
+.meeting-footer .next .icon {
+  background: url("./img/svg/next.svg") center center no-repeat;
+  background-size: contain;
+  width: 24px;
+}
+
+.meeting-footer .next:hover .icon {
+  background: url("./img/svg/next_hover.svg") center center no-repeat;
+  background-size: contain;
+  width: 24px;
+}
 
 .meeting-footer .layout .icon {
   background: url("./img/operate/layout.png") center center no-repeat;
@@ -292,6 +315,17 @@ input {
 
 .meeting-footer .layout:hover .icon {
   background: url("./img/operate/layout_hover.png") center center no-repeat;
+  background-size: contain;
+  width: 34px;
+}
+.meeting-footer .meeting_host .icon {
+  background: url("./img/svg/meeting_host.svg") center center no-repeat;
+  background-size: contain;
+  width: 34px;
+}
+
+.meeting-footer .meeting_host:hover .icon {
+  background: url("./img/svg/meeting_host_hover.svg") center center no-repeat;
   background-size: contain;
   width: 34px;
 }

@@ -414,7 +414,7 @@ input {
   height: 18px;
   background-color: #fff;
   position: absolute;
-  bottom: 35px;
+  bottom: 34px;
   border-radius: 24px;
   overflow: hidden;
   z-index: 10;
@@ -455,13 +455,15 @@ input {
 }
 
 .meeting-footer .setting:hover .icon {
-  background: url("./img/operate/meeting_setting_hover.png") center center no-repeat;
+  background: url("./img/operate/meeting_setting_hover.png") center center
+    no-repeat;
   background-size: contain;
   width: 34px;
 }
 
 .meeting-footer .setting:active .icon {
-  background: url("./img/operate/meeting_setting_active.png") center center no-repeat;
+  background: url("./img/operate/meeting_setting_active.png") center center
+    no-repeat;
   background-size: contain;
   width: 34px;
 }
@@ -489,14 +491,13 @@ input {
   color: #999;
 }
 
-.xy__setting-dialog{
+.xy__setting-dialog {
   width: 500px;
 }
 
+/* 云端录制 */
 
- /* 云端录制 */
-
- .meeting-footer .record .icon {
+.meeting-footer .record .icon {
   background: url("./img/operate/record-normal.png") center center no-repeat;
   background-size: contain;
   width: 34px;
@@ -514,15 +515,34 @@ input {
   width: 34px;
 }
 
-
 .meeting-footer .pause_record .icon {
-  background: url("./img/operate/pause-record-normal.png") center center no-repeat;
+  background: url("./img/operate/pause-record-normal.png") center center
+    no-repeat;
   background-size: contain;
   width: 34px;
 }
 
 .meeting-footer .pause_record:hover .icon {
-  background: url("./img/operate/pause-record-hover.png") center center no-repeat;
+  background: url("./img/operate/pause-record-hover.png") center center
+    no-repeat;
+  background-size: contain;
+  width: 34px;
+}
+
+.meeting-footer .hand_up .icon {
+  background: url("./img/svg/hand_up.svg") center center no-repeat;
+  background-size: contain;
+  width: 34px;
+}
+
+.meeting-footer .hand_down .icon {
+  background: url("./img/svg/hand_down.svg") center center no-repeat;
+  background-size: contain;
+  width: 34px;
+}
+
+.meeting-footer .hand_end .icon {
+  background: url("./img/svg/hand_end.svg") center center no-repeat;
   background-size: contain;
   width: 34px;
 }
@@ -532,15 +552,14 @@ input {
   cursor: default;
 }
 
-
-.status-container{
+.status-container {
   position: absolute;
   left: 10px;
   top: 8px;
-  z-index:1;
+  z-index: 1;
 }
 
-.status-item{
+.status-item {
   height: 32px;
   background: rgba(0, 0, 0, 0.6);
   border-radius: 3px;
@@ -549,14 +568,14 @@ input {
   padding: 0 12px;
   z-index: 99;
   margin-bottom: 8px;
-  color: #FFF;
+  color: #fff;
   font-size: 14px;
 }
 
-.status-item:last-child{
+.status-item:last-child {
   margin-bottom: 0;
 }
-.status-item .timer-icon{
+.status-item .timer-icon {
   width: 8px;
   height: 8px;
   background: #f00;
@@ -564,6 +583,6 @@ input {
   margin-right: 6px;
 }
 
-.status-item .hide{
+.status-item .hide {
   opacity: 0;
 }

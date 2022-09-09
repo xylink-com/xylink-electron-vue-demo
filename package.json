@@ -16,7 +16,7 @@
   "main": "background.js",
   "dependencies": {
     "@vue/composition-api": "^1.7.0",
-    "@xylink/xy-electron-sdk": "0.3.2-beta.3",
+    "@xylink/xy-electron-sdk": "^1.0.0",
     "core-js": "^3.6.5",
     "electron-log": "^4.4.8",
     "element-ui": "^2.13.2",

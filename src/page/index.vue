@@ -244,7 +244,6 @@
 </template>
 
 <script>
-// import { XYRTC } from "@xylink/xy-electron-sdk";
 import XYRTC from "../utils/xyRTC";
 import Store from "electron-store";
 import { ipcRenderer, remote } from "electron";
@@ -354,7 +353,7 @@ export default {
       isRecordPaused: false, // 其它端是否录制暂停中
       recordPermission: {
         // 录制权限相关
-        isStartRecord: false, // 是否其他人已经开始录制
+        isStartRecord: false, // 是否已经开始录制
         canRecord: true, // 录制开关
         confCanRecord: true, // 会控中开启关闭录制权限
       },
@@ -787,7 +786,7 @@ export default {
       }
     });
 
-    // 别人开启或关闭云端录制
+    // 远端上报开启或关闭云端录制通知
     this.xyRTC.on("RecordStatusNotification", (e) => {
       this.recordPermission = {
         ...this.recordPermission,
@@ -795,22 +794,21 @@ export default {
       };
 
       if (e.status) {
-        // 这种是是录制状态改变暂停或录制中，可以是本地或者远端
-        // RECORDING_STATE_ACTING/RECORDING_STATE_PAUSED
+        // 录制是否暂停 RECORDING_STATE_ACTING/RECORDING_STATE_PAUSED
         this.isRecordPaused = e.status === "RECORDING_STATE_PAUSED";
       }
     });
 
-    // 自己开始录制状态改变
+    // 本地开始录制状态改变
     this.xyRTC.on("RecordingStateChanged", (e) => {
-      // 本地开启关闭录制后，RecordStatusNotification没有最后一次上报，因此只能手动处理了
-      // RecordingStateChanged触发，远端肯定没有开始录制
+      // 本地开启关闭录制后，RecordStatusNotification没有最后一次上报，因此需要手动处理
+      // RecordingStateChanged触发，远端必定没有开始录制
       this.recordPermission = {
         ...this.recordPermission,
         isStartRecord: false,
       };
 
-      // 本地开启关闭录制后，RecordStatusNotification没有最后一次上报，因此只能手动处理了
+      // 本地开启关闭录制后，RecordStatusNotification没有最后一次上报，因此需要手动处理
       // RecordingStateChanged触发，远端肯定没有录制暂停
       this.isRecordPaused = false;
       // 无权限
@@ -1268,14 +1266,12 @@ export default {
     },
     openMeetingControlWin() {
       // 会控链接
-      // const { pc } = this.xyRTC.getConfMgmtUrl();
-      const pc = this.confMgmtUrl;
-      console.log("pc", pc);
+      const { members } = this.xyRTC.getConfMgmtUrl();
 
       const { meetingNumber = "" } = this.conferenceInfo;
 
-      if (pc) {
-        ipcRenderer.send("meetingControlWin", { url: pc, meetingNumber });
+      if (members) {
+        ipcRenderer.send("meetingControlWin", { url: members, meetingNumber });
       }
     },
   },

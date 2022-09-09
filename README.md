@@ -11,36 +11,38 @@
 $ yarn
 ```
 
-### 第二步（可选）
-Demo默认安装最新32位Electron版本；
+### 第二步
+#### window平台
 ```bash
-# 安装32位electron，版本随意，此处演示
+# window 安装32位electron，版本随意，此处演示
 $ yarn add electron@5.0.13 -D --arch=ia32
+
+# mac平台
+$ yarn add electron@5.0.13
 ```
 
+>注意：mac平台安装需要注释掉`.npmrc`的内容
 ### 第三步
-安装完成  @xylink/xy-electron-sdk 后，进入项目根目录 -> node_modules -> @xylink -> xy-electron-sdk -> dll 文件夹下，将所有的文件复制到当前项目的根路径的 dll 目录下（可自定义dll加载路径，当前sdk demo指定了dll路径，参加`src\page\index.vue Line:352`，代码如下）；
+设置dll路径（可自定义dll加载路径，当前sdk demo指定了dll路径，参考代码如下）
 
 ```js
-this.xyRTC = XYRTC.getXYInstance({
-  ...,
-  dllPath: "./dll"
-});
-```
+let dllPath = "";
 
-### 第四步
-执行完步骤三，项目dll目录会存在一个"I420ToARGB.cso"文件，将此文件复制到：node_modules\electron\dist 目录下；
-
-> 注意：步骤四是解决本地开发时，调用摄像头采集crash的问题，打正式包时，此步骤不需要，需进行第五步配置。
-
-### 第五步
-打正式包时，需将"I420ToARGB.cso"文件放置在运行程序的根目录。改写打包配置，将"I420ToARGB.cso"文件配置成
-```
-{
-   from: "./dll/I420ToARGB.cso",
-   to: "./",
-   filter: ["**/*"],
+if (process.env.NODE_ENV === "development") {
+  dllPath = "node_modules/@xylink/xy-electron-sdk/dll";
+} else {
+  // 如果win使用scheme调用，需传入绝对路径
+  dllPath =
+    process.platform === "win32"
+      ? path.join(path.dirname(process.execPath), "./dll")
+      : "../Frameworks";
 }
+
+this.xyRTC = XYRTC.getInstance({
+  httpProxy: proxy,
+  model: this.model,
+  dllPath,
+});
 ```
 
 ## 本地开发
@@ -51,9 +53,16 @@ $ yarn dev
 
 ### 构建
 
-```
+```bash
+# windows
 $ yarn build:32
+
+# mac
+$ yarn build:mac
 ```
+> 注意： 需在Mac电脑下构建Mac安装包；在windows电脑下构建windows安装包
+
+构建完成后，在release/build目录下可得到对应的包。
 
 ### 文档
 

@@ -1,25 +1,10 @@
 <template>
-  <div class="record-time">
-    <div :class="timerStyle"></div>
-    <div class="record-time">
-      云端录制&nbsp;
-      {{
-        showTimer && !isRecordPaused
-          ? timer
-          : isRecordPaused
-          ? "暂停中"
-          : "录制中"
-      }}
-    </div>
-  </div>
+    <span>{{ timer }}</span>
 </template>
 <script>
+import { Fragment } from "vue-fragment";
 export default {
-  props: ["showTimer", "isRecordPaused"],
   computed: {
-    timerStyle() {
-      return this.timerCount % 2 === 0 ? "icon" : "icon hide";
-    },
     timer() {
       return this.secondToDate(this.timerCount);
     },
@@ -30,14 +15,10 @@ export default {
       meetingTimeout: null,
     };
   },
-  watch: {
-    isRecordPaused: function (val, oldVal) {
-      console.log("new: %s, old: %s", val, oldVal);
-      if (oldVal && !val) {
-        this.onCreateMeetingTimeCount();
-      }
-    },
+  components: {
+    Fragment,
   },
+  watch: {},
   mounted() {
     this.onCreateMeetingTimeCount();
   },
@@ -50,11 +31,9 @@ export default {
       this.meetingTimeout = setTimeout(() => {
         this.meetingTimeout && clearTimeout(this.meetingTimeout);
         this.meetingTimeout = null;
-        console.log("this.isRecordPaused", this.isRecordPaused);
-        if (!this.isRecordPaused) {
-          this.timerCount += 1;
-          this.onCreateMeetingTimeCount();
-        }
+
+        this.timerCount += 1;
+        this.onCreateMeetingTimeCount();
       }, 1000);
     },
     secondToDate(result) {
@@ -75,21 +54,3 @@ export default {
   },
 };
 </script>
-<style scoped lang="scss">
-.record-time {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  .icon {
-    width: 8px;
-    flex: 0 0 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 6px;
-    background: #fa6a69;
-  }
-  .icon.hide {
-    background: transparent;
-  }
-}
-</style>

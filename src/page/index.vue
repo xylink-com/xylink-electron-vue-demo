@@ -32,7 +32,7 @@
             </div>
           </div>
 
-          <el-row v-if="status === 'externalLogin'">
+          <el-row v-if="meetingStore.callState === 'externalLogin'">
             <el-input
               class="text"
               placeholder="extID"
@@ -58,7 +58,7 @@
             >
           </el-row>
 
-          <el-row v-if="status === 'logined'">
+          <el-row v-if="meetingStore.callState === 'logined'">
             <el-input
               class="text"
               placeholder="会议号"
@@ -81,10 +81,8 @@
             ></el-input>
 
             <div class="text">
-              <el-checkbox v-model="info.muteVideo"
-                >入会时关闭摄像头</el-checkbox
-              >
-              <el-checkbox v-model="info.muteAudio">入会时静音</el-checkbox>
+              <el-checkbox v-model="info.video">开启摄像头</el-checkbox>
+              <el-checkbox v-model="info.audio">开启麦克风</el-checkbox>
             </div>
             <div>
               <el-button class="xy__login-btn" type="primary" @click="makeCall"
@@ -98,7 +96,7 @@
         </div>
       </div>
 
-      <div class="loading" v-if="status === 'calling'">
+      <div class="loading" v-if="meetingStore.callState === 'calling'">
         <div class="loading-content">
           <div class="avatar">
             <img
@@ -114,19 +112,24 @@
         </div>
       </div>
 
-      <div v-if="status === 'meeting'">
-        <div class="meeting-header">
-          <span>{{ info.meeting }}</span>
-        </div>
+      <MeetingHeader
+        v-if="meetingStore.callState === 'meeting'"
+        :conferenceInfo="conferenceInfo"
+        :holdInfo="holdInfo"
+      />
 
+      <div v-if="meetingStore.callState === 'meeting' && !holdInfo.isOnhold">
         <div class="meeting-content">
-          <div class="status-container">
-            <CloudRecordStatus
-              v-if="recordTipStatus"
-              :showTimer="showTimer"
-              :isRecordPaused="isRecordPaused"
-            />
-          </div>
+          <PromptInfo
+            :recordPermission="recordPermission"
+            :isRecordPaused="isRecordPaused"
+            :recordStatus="recordStatus"
+            :forceFullScreenId="forceFullScreenId"
+            :setForceFullScreen="setForceFullScreen"
+            :isLocalShareContent="shareContentStatus === 1"
+            :chirmanUri="chirmanUri"
+            :content="contentInfo"
+          />
 
           <div class="meeting-layout" :style="layoutStyle">
             <Video
@@ -134,6 +137,8 @@
               :key="val.key"
               :item="val"
               :xyRTC="xyRTC"
+              :templateModel="templateModel"
+              :toggleForceFullScreen="() => toggleForceFullScreen(val.id)"
             ></Video>
           </div>
 
@@ -147,12 +152,12 @@
 
         <div class="meeting-footer">
           <div class="middle">
-            <div @click="switchPage('previous')" class="button layout">
-              <div className="icon"></div>
-              <div className="title">上一页（{{ pageInfo.currentPage }}）</div>
+            <div @click="switchPage('previous')" class="button previous">
+              <div class="icon"></div>
+              <div class="title">上一页（{{ pageInfo.currentPage }}）</div>
             </div>
 
-            <div @click="switchPage('next')" class="button layout">
+            <div @click="switchPage('next')" class="button next">
               <div class="icon"></div>
               <div class="title">下一页</div>
             </div>
@@ -160,6 +165,12 @@
             <div @click="switchLayout" class="button layout">
               <div class="icon"></div>
               <div class="title">窗口布局</div>
+            </div>
+            <div @click="openMeetingControlWin" class="button meeting_host">
+              <div class="icon"></div>
+              <div class="title">
+                参会者({{ cacheConfInfo.visibleEpCount || 1 }})
+              </div>
             </div>
 
             <div
@@ -182,11 +193,7 @@
               </div>
             </div>
 
-            <div
-              v-if="callMode === 'AudioVideo'"
-              @click="videoOperate"
-              :class="videoOperateClass"
-            >
+            <div @click="videoOperate" :class="videoOperateClass">
               <div class="icon"></div>
               <div class="title">
                 {{ video === "unmuteVideo" ? "关闭摄像头" : "开启摄像头" }}
@@ -204,25 +211,20 @@
 
               <div class="title">{{ audioStatus.status }}</div>
             </div>
-
-            <div @click="switchCallMode" class="button setting">
-              <div class="icon"></div>
-              <div class="title">
-                {{ callMode === "AudioOnly" ? "退出语音模式" : "语音模式" }}
-              </div>
-            </div>
-
-            <div @click="toggleProxyModal" class="button setting">
-              <div class="icon"></div>
-              <div class="title">设置</div>
-            </div>
-
-            <div @click="sendExternalMsg" class="button setting">
-              <div class="icon"></div>
-              <div class="title">
-                {{ isExternal ? "关闭外接" : "打开外接" }}
-              </div>
-            </div>
+            <More #more="{ closeMore }">
+              <dl class="more-select" @click="closeMore">
+                <dd @click="switchCallMode">
+                  {{ callMode === "AudioOnly" ? "退出语音模式" : "语音模式" }}
+                </dd>
+                <NmberKeyBoard #keyBoardBtn="{ open }">
+                  <dd @click="open">键盘</dd>
+                </NmberKeyBoard>
+                <!-- <dd @click="sendExternalMsg">
+                  {{ isExternal ? "关闭外接" : "打开外接" }}
+                </dd> -->
+                <dd @click="toggleProxyModal">设置</dd>
+              </dl>
+            </More>
           </div>
           <div class="right">
             <div class="button end_call" @click="hangup">
@@ -232,12 +234,17 @@
           </div>
         </div>
       </div>
+      <Hold
+        v-if="holdInfo.isOnhold"
+        :conferenceInfo="conferenceInfo"
+        :stopMeeting="hangup"
+      />
     </div>
   </div>
 </template>
 
 <script>
-import { XYRTC } from "@xylink/xy-electron-sdk";
+import XYRTC from "../utils/xyRTC";
 import Store from "electron-store";
 import { ipcRenderer, remote } from "electron";
 import { USER_INFO, DEFAULT_PROXY, RECORD_STATE_MAP } from "../utils/enum";
@@ -249,7 +256,12 @@ import Video from "./components/Video/index.vue";
 import SettingModal from "./components/Modal/index.vue";
 import InOutReminder from "./components/InOutReminder/index.vue";
 import Barrage from "./components/Barrage/index.vue";
-import CloudRecordStatus from "./components/CloudRecordStatus/index.vue";
+import PromptInfo from "./components/PromptInfo/index.vue";
+import MeetingHeader from "./components/Header/index.vue";
+import NmberKeyBoard from "./components/NumberKeyBoard/index.vue";
+import Hold from "./components/Hold/index.vue";
+import More from "./components/More/index.vue";
+import { useCallStateStore } from "../store/index";
 import path from "path";
 
 const store = new Store();
@@ -261,7 +273,7 @@ const message = {
 };
 const proxy = store.get("xyHttpProxy") || DEFAULT_PROXY;
 const env = String(proxy).split(".")[0] || "cloud";
-const MODEL = store.get("xyLayoutModel") || "custom";
+const MODEL = store.get("xyLayoutModel") || "CUSTOM";
 
 const maxSize = 4;
 const defaultPageInfo = {
@@ -278,7 +290,11 @@ export default {
     SettingModal,
     Barrage,
     InOutReminder,
-    CloudRecordStatus,
+    PromptInfo,
+    MeetingHeader,
+    NmberKeyBoard,
+    Hold,
+    More,
   },
   data() {
     return {
@@ -288,6 +304,10 @@ export default {
       visible: false,
       info: store.get("xyUserInfo") || USER_INFO,
       xyRTC: null,
+      templateModel: "SPEAKER",
+      forceFullScreenId: "",
+      disableContent: false,
+      chirmanUri: "",
       screenInfo: {
         layoutWidth: 0,
         layoutHeight: 0,
@@ -295,19 +315,24 @@ export default {
       // xyLogin/externalLogin/logined/calling/meeting
       status: "externalLogin",
       layout: [],
-      audio: "unmute",
-      video: "unmuteVideo",
+      audio: "mute",
+      video: "muteVideo",
+      meetingStore: useCallStateStore(),
       disableAudio: false,
+      handStatus: false, // 举手状态
+      conferenceInfo: {},
+      confMgmtUrl: "",
+      holdInfo: {},
       shareContentStatus: 0,
       setting: false,
       model: MODEL,
       modelList: [
         {
-          value: "auto",
+          value: "AUTO",
           label: "自动布局",
         },
         {
-          value: "custom",
+          value: "CUSTOM",
           label: "自定义布局",
         },
       ],
@@ -328,10 +353,12 @@ export default {
       isRecordPaused: false, // 其它端是否录制暂停中
       recordPermission: {
         // 录制权限相关
-        isStartRecord: false, // 是否其他人已经开启录制
+        isStartRecord: false, // 是否已经开始录制
         canRecord: true, // 录制开关
         confCanRecord: true, // 会控中开启关闭录制权限
       },
+      unmuteCamera: false,
+      unmuteMic: false,
     };
   },
   computed: {
@@ -363,26 +390,32 @@ export default {
       return layoutStyle;
     },
     videoOperateClass() {
-      let classList = "button ";
-
-      classList += this.video === "unmuteVideo" ? "camera" : "mute_camera";
-
-      return classList;
+      return {
+        button: true,
+        camera: this.video === "unmuteVideo",
+        mute_camera: this.video !== "unmuteVideo",
+        "disabled-button": this.callMode === "AudioOnly",
+      };
     },
     audioStatus() {
-      const audioClass = this.audio === "unmute" ? "mic_aec" : "mute_mic";
+      let audioClass = this.audio === "unmute" ? "mic_aec" : "mute_mic";
       let disabledMute = "";
 
       let audioStatus = "静音";
 
       if (this.audio === "unmute") {
-        audioStatus = "静音";
-      } else if (this.audio === "mute" && this.disableAudio) {
-        audioStatus = "强制静音";
+        audioStatus = this.disableAudio ? "结束发言" : "静音";
 
-        disabledMute = "disabled_mute";
-      } else if (this.audio === "mute" && !this.disableAudio) {
-        audioStatus = "取消静音";
+        if (this.disableAudio) {
+          audioClass = "hand_end";
+        }
+      } else if (this.audio === "mute") {
+        if (this.disableAudio) {
+          audioStatus = this.handStatus ? "取消举手" : "举手发言";
+          audioClass = this.handStatus ? "hand_down" : "hand_up";
+        } else {
+          audioStatus = "取消静音";
+        }
       }
 
       const className = `button ${audioClass} ${disabledMute}`;
@@ -395,7 +428,11 @@ export default {
     disableRecord() {
       const { isStartRecord, canRecord, confCanRecord } = this.recordPermission;
 
-      if (isStartRecord || !canRecord || !confCanRecord) {
+      if (
+        (isStartRecord && this.recordStatus !== RECORD_STATE_MAP.acting) ||
+        !canRecord ||
+        !confCanRecord
+      ) {
         return true;
       }
 
@@ -419,7 +456,7 @@ export default {
     recordText() {
       return this.recordStatus === RECORD_STATE_MAP.acting
         ? "停止录制"
-        : "开启录制";
+        : "开始录制";
     },
     recordTipStatus() {
       return !(
@@ -430,18 +467,54 @@ export default {
     showTimer() {
       return RECORD_STATE_MAP.acting === this.recordStatus;
     },
+    contentInfo() {
+      const { contentPartCount } = this.cacheConfInfo;
+      console.log("contentPartCount", contentPartCount);
+      if (contentPartCount < 1) {
+        return null;
+      }
+
+      const contentInfo = this.layoutList.find((item) => item.roster.isContent);
+      console.log("contentInfo", contentInfo);
+      return contentInfo;
+    },
+    disabledPage() {
+      if (this.model === "CUSTOM") {
+        return false;
+      }
+
+      const { participantCount, chairManUrl } = this.cacheConfInfo;
+      const localLayout = this.layoutList.find(
+        (item) => item.sourceId === "LocalPreviewID"
+      );
+      const isRemoteManUrl =
+        chairManUrl && chairManUrl !== localLayout?.roster.callUri;
+      // 1. 主会场出现 2. local+远端content 3. 本地共享content 4. 只有一个人
+      return (
+        this.shareContentStatus === 1 ||
+        isRemoteManUrl ||
+        participantCount === 1
+      );
+    },
   },
   mounted() {
     if (this.xyRTC) {
       console.log("mounted======================");
     }
 
-    const dllPath =
-      process.env.NODE_ENV === "production"
-        ? path.join(path.dirname(process.execPath), "./dll")
-        : "./dll";
+    let dllPath = "";
 
-    this.xyRTC = XYRTC.getXYInstance({
+    if (process.env.NODE_ENV === "development") {
+      dllPath = "node_modules/@xylink/xy-electron-sdk/dll";
+    } else {
+      // 如果win使用scheme调用，需传入绝对路径
+      dllPath =
+        process.platform === "win32"
+          ? path.join(path.dirname(process.execPath), "./dll")
+          : "../Frameworks";
+    }
+
+    this.xyRTC = XYRTC.getInstance({
       httpProxy: proxy,
       model: this.model,
       dllPath,
@@ -453,14 +526,33 @@ export default {
 
     // this.xyRTC.enableAECMode(false);
 
+    this.xyRTC.on("TemplateModelChanged", (e) => {
+      this.templateModel = e;
+    });
+
+    this.xyRTC.on("ForceFullScreen", (id) => {
+      console.log("Event forceFullScreen id:", id);
+      this.forceFullScreenId = id;
+    });
+
+    this.xyRTC.on("PageInfo", (e) => {
+      console.log("PageInfo: ", e);
+      this.pageInfo = e;
+    });
+
+    this.xyRTC.on("ConferenceInfo", (e) => {
+      console.log("ConferenceInfo: ", e);
+      this.conferenceInfo = e;
+    });
+
     // call status event
     this.xyRTC.on("CallState", (e) => {
       const { state, reason } = e;
 
       if (state === "Connected") {
-        if (this.status !== "meeting") {
+        if (this.meetingStore.callState !== "meeting") {
           // start render
-          this.status = "meeting";
+          this.meetingStore.callState = "meeting";
 
           message.info("入会成功");
         }
@@ -474,10 +566,11 @@ export default {
 
     // login status event
     this.xyRTC.on("LoginState", (e) => {
+      console.log("LoginState", e);
       if (e.state === "Logined") {
         message.info("登录成功");
 
-        this.status = "logined";
+        this.meetingStore.callState = "logined";
       } else if (e.state === "Logouted") {
         if (e.error === 1013 || e.error === 1014 || e.error === 1031) {
           message.info("用户名或密码错误");
@@ -487,13 +580,13 @@ export default {
           message.info("注销成功");
         }
 
-        this.status = "externalLogin";
+        this.meetingStore.callState = "externalLogin";
       }
     });
 
     // video streams change event
     this.xyRTC.on("VideoStreams", (e) => {
-      if (this.model === "custom") {
+      if (this.model === "CUSTOM") {
         // 每次推送都会携带local数据，如果分页不需要展示，则移除local数据
         if (this.cachePageInfo.currentPage !== 0) {
           const localIndex = e.findIndex(
@@ -550,6 +643,11 @@ export default {
       this.shareContentStatus = e;
     });
 
+    // 会控取消举手 回调
+    this.xyRTC.on("ConfHandupCancelled", () => {
+      this.handStatus = false;
+    });
+
     // local 音频状态
     this.xyRTC.on("AudioStatusChanged", (e) => {
       console.log("local audio status changed: ", e);
@@ -578,14 +676,36 @@ export default {
     // 可以通过此消息获取：会控播放地址/主会场callUri/麦克风状态/是否是强制静音麦克风
     // 自定义布局模式下，主会场callUri需要记录下来，后续requestLayout计算需要使用
     this.xyRTC.on("ConfControl", (e) => {
-      console.log("metting control message: ", e);
+      console.log("meeting control message: ", e);
 
-      const { disableMute, muteMic, disableRecord } = e;
+      const {
+        disableMute,
+        muteMic,
+        disableRecord,
+        chirmanUri,
+        disableContent,
+        confMgmtUrl,
+      } = e;
       this.disableAudio = disableMute;
-      if (muteMic === "mute") {
-        this.audio = "mute";
-      } else if (muteMic === "unmute") {
-        this.audio = "unmute";
+
+      let info = "";
+
+      if (muteMic === "mute" && disableMute) {
+        info = "主持人已强制静音，如需发言，请点击“举手发言”";
+
+        this.handStatus = false;
+      } else if (muteMic === "mute" && !disableMute) {
+        info = "您已被主持人静音";
+      } else if (muteMic === "unmute" && disableMute) {
+        info = "主持人已允许您发言";
+        this.handStatus = false;
+      } else if (muteMic === "unmute" && !disableMute) {
+        info = "您已被主持人取消静音";
+      }
+
+      // 在等候室时，不做提示
+      if (!this.holdInfo.isOnhold && info) {
+        message.info(info);
       }
 
       // 会控控制录制权限
@@ -593,19 +713,26 @@ export default {
         ...this.recordPermission,
         confCanRecord: !disableRecord,
       };
+
+      this.disableContent = disableContent;
+
+      // 会控触发主会场
+      this.chirmanUri = chirmanUri;
+      this.confMgmtUrl = confMgmtUrl;
     });
 
     // 会议信息发生变化，会推送此消息，开始计算请求layout
     this.xyRTC.on("ConfInfoChanged", (e) => {
       console.log("react conf info change:", e);
 
-      if (this.model === "auto") {
+      this.cacheConfInfo = { ...e };
+
+      if (this.model === "AUTO") {
         // 自动布局内部计算了layout请流，不需要外部处理
         return;
       }
 
       const { participantCount, contentPartCount } = e;
-      this.cacheConfInfo = e;
 
       const { maxSize } = this.cachePageInfo;
       // 会议产生变动，那么就重新计算总页数
@@ -659,20 +786,31 @@ export default {
       }
     });
 
-    // 别人开启或关闭云端录制
+    // 远端上报开启或关闭云端录制通知
     this.xyRTC.on("RecordStatusNotification", (e) => {
+      this.recordPermission = {
+        ...this.recordPermission,
+        isStartRecord: e.isStart,
+      };
+
       if (e.status) {
+        // 录制是否暂停 RECORDING_STATE_ACTING/RECORDING_STATE_PAUSED
         this.isRecordPaused = e.status === "RECORDING_STATE_PAUSED";
-      } else {
-        this.recordPermission = {
-          ...this.recordPermission,
-          isStartRecord: e.isStart,
-        };
       }
     });
 
-    // 自己开启录制状态改变
+    // 本地开始录制状态改变
     this.xyRTC.on("RecordingStateChanged", (e) => {
+      // 本地开启关闭录制后，RecordStatusNotification没有最后一次上报，因此需要手动处理
+      // RecordingStateChanged触发，远端必定没有开始录制
+      this.recordPermission = {
+        ...this.recordPermission,
+        isStartRecord: false,
+      };
+
+      // 本地开启关闭录制后，RecordStatusNotification没有最后一次上报，因此需要手动处理
+      // RecordingStateChanged触发，远端肯定没有录制暂停
+      this.isRecordPaused = false;
       // 无权限
       if (e.reason === "XYSDK:963902") {
         this.recordPermission = {
@@ -693,6 +831,11 @@ export default {
       if (e.recordState === RECORD_STATE_MAP.idel) {
         message.info("云端录制完成，录制视频已保存到云会议室管理员的文件夹中");
       }
+    });
+
+    // 等候室信息
+    this.xyRTC.on("OnHold", (e) => {
+      this.holdInfo = e;
     });
   },
   methods: {
@@ -718,8 +861,7 @@ export default {
     },
     makeCall() {
       // 登录&连接服务器成功，可以入会
-      const { meeting, meetingPassword, meetingName, muteVideo, muteAudio } =
-        this.info;
+      const { meeting, meetingPassword, meetingName, video, audio } = this.info;
 
       if (!meeting || !meetingName) {
         message.info("请填写入会信息");
@@ -732,17 +874,17 @@ export default {
         meeting,
         meetingPassword,
         meetingName,
-        muteVideo,
-        muteAudio
+        !video,
+        !audio
       );
 
       if (result.code === 3002) {
         message.info("请登录后发起呼叫");
       } else {
-        this.video = this.info.muteVideo ? "muteVideo" : "unmuteVideo";
-        this.audio = this.info.muteAudio ? "mute" : "unmute";
+        this.video = this.info.video ? "unmuteVideo" : "muteVideo";
+        this.audio = this.info.audio ? "unmute" : "mute";
 
-        this.status = "calling";
+        this.meetingStore.callState = "calling";
       }
     },
     hangup() {
@@ -752,9 +894,12 @@ export default {
         this.isExternal = false;
       }
 
+      // 关闭会控弹框
+      ipcRenderer.send("meetingControlWin", false);
+
       this.audio = "unmute";
       this.video = "unmuteVideo";
-      this.status = "logined";
+      this.meetingStore.callState = "logined";
       this.subTitle = {
         action: "cancel",
         content: "",
@@ -781,28 +926,85 @@ export default {
         message.info(err?.msg || "切换失败");
       }
     },
+    setForceFullScreen(id = "") {
+      try {
+        this.xyRTC.forceFullScreen(this.forceFullScreenId ? "" : id);
+      } catch (error) {
+        console.log("强制全屏error: ", error);
+      }
+    },
+    toggleForceFullScreen(id) {
+      console.log("toggleForceFullScreen", id);
+      // 分页大于1，即使只显示一个画面，也可以全屏
+      if (
+        this.layoutList.length === 1 &&
+        this.pageInfo.currentPage <= 1 &&
+        !this.forceFullScreenId
+      ) {
+        return;
+      }
+
+      this.setForceFullScreen(this.forceFullScreenId ? "" : id);
+    },
     stopShareContent() {
       this.xyRTC.stopSendContent();
     },
     shareContent() {
-      this.xyRTC.startSendContent(true);
-    },
-    audioOperate() {
-      if (this.audio === "mute" && this.disableAudio) {
+      if (this.disableContent) {
+        message.info("没有双流分享权限");
         return;
       }
 
-      if (this.audio === "unmute") {
-        this.audio = "mute";
-        message.info("麦克风已静音");
+      this.xyRTC.startSendContent(true);
+    },
 
-        this.xyRTC.muteMic(true);
-      } else {
-        this.audio = "unmute";
-        this.xyRTC.muteMic(false);
+    // 麦克风操作
+    async onAudioOperate() {
+      try {
+        if (this.audio === "unmute") {
+          this.audio = "mute";
+          message.info("麦克风已静音");
+
+          this.xyRTC.muteMic(true);
+        } else {
+          this.audio = "unmute";
+          this.xyRTC.muteMic(false);
+        }
+      } catch (err) {
+        message.info("操作失败");
       }
     },
+    // 麦克风操作
+    async audioOperate() {
+      if (this.audio === "mute" && this.disableAudio && !this.handStatus) {
+        this.xyRTC.sendSpeakingRequest();
+
+        this.handStatus = true;
+        message.info("发言请求已发送");
+
+        return;
+      }
+
+      if (this.audio === "mute" && this.disableAudio && this.handStatus) {
+        this.xyRTC.cancelSpeakingRequest();
+
+        this.handStatus = false;
+        return;
+      }
+
+      if (this.audio === "unmute" && this.disableAudio) {
+        this.xyRTC.sendSpeakingEnd();
+
+        this.handStatus = false;
+        return;
+      }
+
+      this.onAudioOperate();
+    },
     videoOperate() {
+      if (this.callMode === "AudioOnly") {
+        return;
+      }
       if (this.video === "unmuteVideo") {
         this.video = "muteVideo";
 
@@ -936,13 +1138,27 @@ export default {
     },
     switchPage(type) {
       console.log("cachePageInfo: ", this.cachePageInfo);
-      const { currentPage, totalPage } = this.cachePageInfo;
-      let nextPage = currentPage;
 
-      if (this.model === "auto") {
-        message.info("自动布局不支持分页显示");
+      if (this.model === "AUTO") {
+        const { currentPage } = this.pageInfo;
+        const targetPage =
+          type === "next"
+            ? currentPage + 1
+            : type === "previous"
+            ? currentPage - 1
+            : type === "home"
+            ? 0
+            : type;
+
+        this.xyRTC.switchPage(targetPage).then(
+          (res) => console.log("switch page success: ", res),
+          (err) => console.log("switch page fail: ", err)
+        );
         return;
       }
+
+      const { currentPage, totalPage } = this.cachePageInfo;
+      let nextPage = currentPage;
 
       if (this.shareContentStatus === 1) {
         message.info("正在分享content，不允许分页");
@@ -1046,6 +1262,16 @@ export default {
         this.xyRTC.startCloudRecord();
       } else if (this.recordStatus === RECORD_STATE_MAP.acting) {
         this.xyRTC.stopCloudRecord();
+      }
+    },
+    openMeetingControlWin() {
+      // 会控链接
+      const { members } = this.xyRTC.getConfMgmtUrl();
+
+      const { meetingNumber = "" } = this.conferenceInfo;
+
+      if (members) {
+        ipcRenderer.send("meetingControlWin", { url: members, meetingNumber });
       }
     },
   },

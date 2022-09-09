@@ -193,10 +193,7 @@
               </div>
             </div>
 
-            <div
-              @click="videoOperate"
-              :class="videoOperateClass"
-            >
+            <div @click="videoOperate" :class="videoOperateClass">
               <div class="icon"></div>
               <div class="title">
                 {{ video === "unmuteVideo" ? "关闭摄像头" : "开启摄像头" }}
@@ -393,25 +390,29 @@ export default {
       return layoutStyle;
     },
     videoOperateClass() {
-
       return {
-        button:true,
+        button: true,
         camera: this.video === "unmuteVideo",
         mute_camera: this.video !== "unmuteVideo",
-        'disabled-button': this.callMode === 'AudioOnly'
-      }
+        "disabled-button": this.callMode === "AudioOnly",
+      };
     },
     audioStatus() {
-      const audioClass = this.audio === "unmute" ? "mic_aec" : "mute_mic";
+      let audioClass = this.audio === "unmute" ? "mic_aec" : "mute_mic";
       let disabledMute = "";
 
       let audioStatus = "静音";
 
       if (this.audio === "unmute") {
         audioStatus = this.disableAudio ? "结束发言" : "静音";
+
+        if (this.disableAudio) {
+          audioClass = "hand_end";
+        }
       } else if (this.audio === "mute") {
         if (this.disableAudio) {
           audioStatus = this.handStatus ? "取消举手" : "举手发言";
+          audioClass = this.handStatus ? "hand_down" : "hand_up";
         } else {
           audioStatus = "取消静音";
         }
@@ -995,7 +996,7 @@ export default {
       this.onAudioOperate();
     },
     videoOperate() {
-      if(this.callMode === 'AudioOnly'){
+      if (this.callMode === "AudioOnly") {
         return;
       }
       if (this.video === "unmuteVideo") {

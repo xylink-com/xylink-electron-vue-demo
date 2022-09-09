@@ -4,11 +4,11 @@ module.exports = {
   pluginOptions: {
     electronBuilder: {
       nodeIntegration: true,
+      customFileProtocol: "./",
       builderOptions: {
         productName: "小鱼云视频vue",
         appId: "org.xylink.vue",
         files: [],
-        compression: "store",
         nsis: {
           oneClick: false,
           allowElevation: true,
@@ -20,6 +20,12 @@ module.exports = {
           installerHeaderIcon: "assets/logo256.ico",
         },
         asar: false,
+        protocols: [
+          {
+            name: "xy-vue-electron",
+            schemes: ["xy-vue-electron"],
+          },
+        ],
         win: {
           icon: "assets/logo256.ico",
           extraFiles: [

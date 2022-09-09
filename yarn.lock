@@ -1852,7 +1852,7 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@xylink/xy-electron-sdk@^0.3.2-beta.3":
+"@xylink/xy-electron-sdk@0.3.2-beta.3":
   version "0.3.2-beta.3"
   resolved "https://fe-private-npm.xylink.com/@xylink%2fxy-electron-sdk/-/xy-electron-sdk-0.3.2-beta.3.tgz#acb87d84caa18a8665bfdab805527fac1dc07f81"
   integrity sha512-NFAfjPxG6iETRqEjpIOAdhMHHhqcQHNBwuyvtwuITJRhpjISugRrqrbC4tbAww+rdz8rbcI69jh4+t05NLX3kA==

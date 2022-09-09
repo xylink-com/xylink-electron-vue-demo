@@ -1794,7 +1794,7 @@
 
 "@xylink/xy-electron-sdk@0.2.5-beta.1":
   version "0.2.5-beta.1"
-  resolved "http://10.80.84.176:4873/@xylink%2fxy-electron-sdk/-/xy-electron-sdk-0.2.5-beta.1.tgz#c43607f9e75d6eb81db282fbb22827b6b1ff6c9e"
+  resolved "https://registry.yarnpkg.com/@xylink/xy-electron-sdk/-/xy-electron-sdk-0.2.5-beta.1.tgz#c43607f9e75d6eb81db282fbb22827b6b1ff6c9e"
   integrity sha512-FUtXOvMpjgGIqftwPO2gOt5b7BGZ4ia115lbGy+aZW/k9GcyY71BgtIOOyRq6BeY1VokTrcJZlxiwFnDtQPnAA==
   dependencies:
     download "^8.0.0"

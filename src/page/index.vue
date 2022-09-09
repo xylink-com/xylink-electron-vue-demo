@@ -247,7 +247,6 @@
 </template>
 
 <script>
-// import { XYRTC } from "@xylink/xy-electron-sdk";
 import XYRTC from "../utils/xyRTC";
 import Store from "electron-store";
 import { ipcRenderer, remote } from "electron";

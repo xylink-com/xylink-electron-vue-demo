@@ -502,10 +502,17 @@ export default {
       console.log("mounted======================");
     }
 
-    const dllPath =
-      process.env.NODE_ENV === "production"
-        ? path.join(path.dirname(process.execPath), "./dll")
-        : "node_modules/@xylink/xy-electron-sdk/dll";
+    let dllPath = "";
+
+    if (process.env.NODE_ENV === "development") {
+      dllPath = "node_modules/@xylink/xy-electron-sdk/dll";
+    } else {
+      // 如果win使用scheme调用，需传入绝对路径
+      dllPath =
+        process.platform === "win32"
+          ? path.join(path.dirname(process.execPath), "./dll")
+          : "../Frameworks";
+    }
 
     this.xyRTC = XYRTC.getInstance({
       httpProxy: proxy,

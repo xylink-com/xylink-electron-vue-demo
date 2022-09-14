@@ -44,28 +44,6 @@ $ yarn add electron@5.0.13 -D --arch=ia32
 # mac平台
 $ yarn add electron@5.0.13
 ```
-### 第四步
-设置dll路径（可自定义dll加载路径，当前sdk demo指定了dll路径，参考代码如下）
-
-```js
-let dllPath = "";
-
-if (process.env.NODE_ENV === "development") {
-  dllPath = "node_modules/@xylink/xy-electron-sdk/dll";
-} else {
-  // 如果windows使用scheme调用，请传入绝对路径
-  dllPath =
-    process.platform === "win32"
-      ? "./dll"
-      : "../Frameworks";
-}
-
-this.xyRTC = XYRTC.getInstance({
-  httpProxy: proxy,
-  model: this.model,
-  dllPath,
-});
-```
 
 ## 本地开发
 

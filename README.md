@@ -16,7 +16,7 @@ export const ACCOUNT = {
 
 ## 集成开发
 ### 第一步
-安装依赖之前，检查.npmrc中配置
+安装依赖之前，检查`.npmrc`中配置
 
 windows环境下配置如下
 ```bash

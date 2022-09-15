@@ -39,7 +39,7 @@ $ yarn
 electron包安装，版本随意，此处演示
 ```bash
 # window 安装32位electron
-$ yarn add electron@5.0.13 -D --arch=ia32
+$ yarn add electron@5.0.13 --arch=ia32
 
 # mac平台
 $ yarn add electron@5.0.13

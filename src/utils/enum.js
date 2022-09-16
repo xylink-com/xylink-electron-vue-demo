@@ -6,6 +6,7 @@
  * Created at     : 2020-08-24 16:11:04
  * Last modified  : 2022-06-02 15:15:01
  */
+import { ACCOUNT } from '../config';
 
 export const USER_INFO = {
   phone: "+86-",
@@ -13,21 +14,17 @@ export const USER_INFO = {
   meeting: "",
   meetingPassword: "",
   meetingName: "",
-  extID: "0142901e3d83e0a1e225ef92b8663fcaebda7242",
+  extID: ACCOUNT.extId,
   extUserId: "",
   displayName: "",
-  muteVideo: false,
-  muteAudio: false
+  video: false,
+  audio: false
 };
 
-export const DEFAULT_PROXY = "cloud.xylink.com";
-
-
-
-export const RECORD_STATE_MAP={
-  idel:0, // 空闲 录制完成
-  starting:1, // 开启录制中
-  acting:2, // 正在录制中
-  stoping:3, // 停止录制中
-  inact:4 // 暂未使用 暂停录制相关，暂时用不到
+export const RECORD_STATE_MAP = {
+  idel: 0, // 空闲 录制完成
+  starting: 1, // 开始录制中
+  acting: 2, // 正在录制中
+  stoping: 3, // 停止录制中
+  inact: 4 // 暂未使用 暂停录制相关，暂时用不到
 }

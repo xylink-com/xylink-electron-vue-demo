@@ -44,15 +44,16 @@ $ yarn add electron@5.0.13 --arch=ia32
 # mac平台
 $ yarn add electron@5.0.13
 ```
-### 第四步（只适用于windows）
-#### 开发环境：
+### 第四步
+#### 开发环境（只需windows环境配置，mac环境忽略）
 
 进入项目 `根目录 -> node_modules -> @xylink -> xy-electron-sdk -> dll` 文件夹下，将`I420ToARGB.cso`文件复制到 `node_modules\electron\dist` 目录下
 > 注意：步骤四是解决本地开发时，调用摄像头采集crash的问题，打正式包时，此步骤不需要。
 
-#### 正式打包：
+#### 正式打包
 在 [vue.config.js](vue.config.js) 中改写打包配置，
 
+windows环境配置如下
 ```bash
 {
   from: "node_modules/@xylink/xy-electron-sdk/dll",
@@ -63,7 +64,15 @@ $ yarn add electron@5.0.13
   from: "node_modules/@xylink/xy-electron-sdk/dll/I420ToARGB.cso",
   to: "./",
   filter: ["**/*"],
-},
+}
+```
+mac环境配置如下
+```bash
+{
+  from: "node_modules/@xylink/xy-electron-sdk/dll",
+  to: "./Frameworks",
+  filter: ["**/*"],
+}
 ```
 
 ## 本地开发
@@ -71,8 +80,9 @@ $ yarn add electron@5.0.13
 ```
 $ yarn dev
 ```
+> 注意： 在Mac电脑下只能运行Mac应用程序；在windows电脑下只能运行windows应用程序
 
-### 构建
+## 构建
 
 ```bash
 # windows
@@ -85,6 +95,6 @@ $ yarn build:mac
 
 构建完成后，在dist_electron目录下可得到对应的包。
 
-### 文档
+## 文档
 
 See our [xy electron sdk docs](https://openapi.xylink.com/common/meeting/doc/description?platform=electron)

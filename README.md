@@ -44,6 +44,27 @@ $ yarn add electron@5.0.13 --arch=ia32
 # mac平台
 $ yarn add electron@5.0.13
 ```
+### 第四步（只适用于windows）
+#### 开发环境：
+
+进入项目 `根目录 -> node_modules -> @xylink -> xy-electron-sdk -> dll` 文件夹下，将`I420ToARGB.cso`文件复制到 `node_modules\electron\dist` 目录下
+> 注意：步骤四是解决本地开发时，调用摄像头采集crash的问题，打正式包时，此步骤不需要。
+
+#### 正式打包：
+在 [vue.config.js](vue.config.js) 中改写打包配置，
+
+```bash
+{
+  from: "node_modules/@xylink/xy-electron-sdk/dll",
+  to: "./dll",
+  filter: ["**/*"],
+},
+{
+  from: "node_modules/@xylink/xy-electron-sdk/dll/I420ToARGB.cso",
+  to: "./",
+  filter: ["**/*"],
+},
+```
 
 ## 本地开发
 

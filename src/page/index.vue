@@ -247,7 +247,8 @@
 import XYRTC from "../utils/xyRTC";
 import Store from "electron-store";
 import { ipcRenderer, remote } from "electron";
-import { USER_INFO, DEFAULT_PROXY, RECORD_STATE_MAP } from "../utils/enum";
+import { USER_INFO, RECORD_STATE_MAP } from "../utils/enum";
+import { DEFAULT_PROXY, ACCOUNT } from "../config";
 import { TEMPLATE } from "../utils/template";
 import { getScreenInfo } from "../utils/index";
 import { Message } from "element-ui";
@@ -262,7 +263,6 @@ import NmberKeyBoard from "./components/NumberKeyBoard/index.vue";
 import Hold from "./components/Hold/index.vue";
 import More from "./components/More/index.vue";
 import { useCallStateStore } from "../store/index";
-import path from "path";
 
 const store = new Store();
 
@@ -507,14 +507,13 @@ export default {
     if (process.env.NODE_ENV === "development") {
       dllPath = "node_modules/@xylink/xy-electron-sdk/dll";
     } else {
-      // 如果win使用scheme调用，需传入绝对路径
-      dllPath =
-        process.platform === "win32"
-          ? path.join(path.dirname(process.execPath), "./dll")
-          : "../Frameworks";
+      // 如果windows使用scheme调用，需传入绝对路径, 例：path.join(path.dirname(process.execPath)
+      dllPath = process.platform === "win32" ? "./dll" : "../Frameworks";
     }
 
     this.xyRTC = XYRTC.getInstance({
+      clientId: ACCOUNT.clientId,
+      clientSecret: ACCOUNT.clientSecret,
       httpProxy: proxy,
       model: this.model,
       dllPath,

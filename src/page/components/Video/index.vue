@@ -1,5 +1,9 @@
 <template>
-  <div class="wrap-video" :class="{'active-speaker': isActiveSpeaker}" :style="item.positionStyle">
+  <div
+    class="wrap-video"
+    :class="{ 'active-speaker': isActiveSpeaker }"
+    :style="item.positionStyle"
+  >
     <div class="video" @dblclick="toggleForceFullScreen">
       <div class="video-content">
         <div class="video-model">
@@ -44,8 +48,10 @@
           </div>
         </div>
       </div>
-
-      <canvas ref="videoRef" />
+      <canvas
+        ref="videoRef"
+        :class="{ 'local-video': item.sourceId === 'LocalPreviewID' }"
+      />
     </div>
   </div>
 </template>
@@ -56,7 +62,14 @@ import { Render, xyTimer } from "@xylink/xy-electron-sdk";
 
 export default {
   name: "Video",
-  props: ["item", "xyRTC", "renderMap", "isExternal", "templateModel","toggleForceFullScreen"],
+  props: [
+    "item",
+    "xyRTC",
+    "renderMap",
+    "isExternal",
+    "templateModel",
+    "toggleForceFullScreen",
+  ],
   data() {
     return {
       videoRenderTimmer: 0, // 视频流渲染定时器
@@ -252,6 +265,10 @@ export default {
 
 .video canvas {
   overflow: hidden;
+}
+
+.video canvas.local-video {
+  transform: rotateY(180deg);
 }
 
 .video .video-model {

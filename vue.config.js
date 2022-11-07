@@ -19,7 +19,7 @@ module.exports = {
           installerIcon: "assets/logo256.ico",
           installerHeaderIcon: "assets/logo256.ico",
         },
-        asar: false,
+        asar: true,
         protocols: [
           {
             name: "xy-vue-electron",

@@ -245,7 +245,7 @@
 
 <script>
 import XYRTC from "../utils/xyRTC";
-import store from "../utils/store";
+import Store from "electron-store";
 import { ipcRenderer, remote } from "electron";
 import { USER_INFO, RECORD_STATE_MAP } from "../utils/enum";
 import { DEFAULT_PROXY, ACCOUNT } from "../config";
@@ -263,6 +263,8 @@ import NmberKeyBoard from "./components/NumberKeyBoard/index.vue";
 import Hold from "./components/Hold/index.vue";
 import More from "./components/More/index.vue";
 import { useCallStateStore } from "../store/index";
+
+const store = new Store();
 
 const message = {
   info: (message) => {

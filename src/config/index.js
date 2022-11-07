@@ -15,7 +15,7 @@
 export const DEFAULT_PROXY = "sdkapi.xylink.com";
 
 export const ACCOUNT = {
-  extId: '',
+ extId: '',
   clientId: '',
   clientSecret: '',
 };

@@ -767,6 +767,12 @@ export default {
       }
     });
 
+    ipcRenderer.on("check-device-finished", (event, isFinished) => {
+      if (isFinished) {
+        this.joinMeeting();
+      }
+    });
+
     // 字幕
     this.xyRTC.on("SubTitle", (e) => {
       this.subTitle = e;
@@ -853,19 +859,25 @@ export default {
     externalLogin() {
       const { extID, extUserId, displayName } = this.info;
 
-      this.xyRTC.loginExternalAccount(extID, extUserId, displayName);
+      // displayName中文在mac上可能会导致乱码，需要转成UTF-8
+      this.xyRTC.loginExternalAccount(extID, extUserId, encodeURI(displayName));
     },
     onLogout() {
       this.xyRTC.logout();
     },
     makeCall() {
       // 登录&连接服务器成功，可以入会
-      const { meeting, meetingPassword, meetingName, video, audio } = this.info;
+      const { meeting, meetingName } = this.info;
 
       if (!meeting || !meetingName) {
         message.info("请填写入会信息");
         return;
       }
+
+      ipcRenderer.send("check-device-access-privilege");
+    },
+    joinMeeting() {
+      const { meeting, meetingPassword, meetingName, video, audio } = this.info;
 
       this.xyRTC.setLocalPreviewResolution(2); // 设置本地画面采集分辨率（360P）
 

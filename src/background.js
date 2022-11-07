@@ -7,6 +7,7 @@ import { format as formatUrl } from "url";
 import log from "electron-log";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
+import { checkDeviceAccessPrivilege } from './utils/checkPrivilege'
 
 const RESOURCES_PATH = app.isPackaged
   ? path.join(process.resourcesPath, "assets")
@@ -236,6 +237,14 @@ function createWindow() {
       meetingControlWindow.on("page-title-updated", (event) => {
         event.preventDefault();
       });
+    }
+  });
+
+  // 主动申请一次摄像头、麦克风权限
+  ipcMain.on('check-device-access-privilege', async () => {
+    await checkDeviceAccessPrivilege();
+    if (win) {
+      win.webContents.send("check-device-finished", true);
     }
   });
 }

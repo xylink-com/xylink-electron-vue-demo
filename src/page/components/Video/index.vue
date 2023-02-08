@@ -57,14 +57,15 @@
 </template>
 
 <script>
-import { remote } from "electron";
+// import { remote } from "electron";
+import remote from "@electron/remote";
+import xyRTC from '@/utils/xyRTC';
 import { Render, xyTimer } from "@xylink/xy-electron-sdk";
 
 export default {
   name: "Video",
   props: [
     "item",
-    "xyRTC",
     "renderMap",
     "isExternal",
     "templateModel",
@@ -154,7 +155,7 @@ export default {
     // sourceId变化时，需要重新执行setVideoRender方法
     render(data) {
       const { sourceId } = data;
-      this.xyRTC.setVideoRender(sourceId, this.$refs.videoRef);
+      xyRTC.setVideoRender(sourceId, this.$refs.videoRef);
     },
     // [external] 建立自己的render
     setRender(id) {

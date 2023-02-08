@@ -1,10 +1,17 @@
-"use strict";
+// "use strict";
 
 import { app, BrowserWindow, ipcMain, screen } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import * as path from "path";
 import { format as formatUrl } from "url";
-import log from "electron-log";
+import {initialize} from '@electron/remote/main'; // electron 10 以后，electron中的 remote被移除
+import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer';
+import Store from "electron-store";
+
+// remote 初始化
+initialize();
+// 只在渲染进程中用，需要初始化
+Store.initRenderer();
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 import { checkDeviceAccessPrivilege } from './utils/checkPrivilege'
@@ -71,7 +78,7 @@ function handleUrl(url) {
   number = searchParams.get("number") || "";
 
   // createWindow可传入此参数，做其他业务处理
-  log.info("handleUrl number:", number);
+  console.info("handleUrl number:", number);
 }
 
 function createWindow() {
@@ -284,11 +291,11 @@ if (!app.requestSingleInstanceLock()) {
       // Electron will not launch with Devtools extensions installed on Windows 10 with dark mode
       // If you are not using Windows 10 dark mode, you may uncomment the following lines (and the import at the top of the file)
       // In addition, if you upgrade to Electron ^8.2.5 or ^9.0.0 then devtools should work fine
-      // try {
-      //   await installExtension(VUEJS_DEVTOOLS)
-      // } catch (e) {
-      //   console.error('Vue Devtools failed to install:', e.toString())
-      // }
+      try {
+        await installExtension(VUEJS3_DEVTOOLS)
+      } catch (e) {
+        console.error('Vue Devtools failed to install:', e.toString())
+      }
     }
     createWindow();
   });

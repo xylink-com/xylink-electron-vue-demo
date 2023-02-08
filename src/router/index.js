@@ -1,7 +1,6 @@
-import VueRouter from "vue-router";
-
 import Index from "@/page/index";
 import External from "@/page/external";
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
   {
@@ -16,8 +15,9 @@ const routes = [
   },
 ];
 
-const router = new VueRouter({
+const router = createRouter({
   routes,
+  history: createWebHashHistory(),
 });
 
 export default router;

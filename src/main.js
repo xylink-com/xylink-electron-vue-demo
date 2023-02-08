@@ -1,22 +1,29 @@
-import Vue from "vue";
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from "./App.vue";
-import VueRouter from "vue-router";
 import router from "./router";
-import "./plugins/element.js";
+
+import ElementPlus from 'element-plus'
+import 'element-plus/theme-chalk/index.css'
 import "./style/global.index.css";
-import { createPinia, PiniaVuePlugin } from 'pinia';
-import VueClipboard from 'vue-clipboard2'
 
-Vue.use(VueClipboard);
-Vue.use(PiniaVuePlugin);
-Vue.use(VueRouter);
-Vue.config.productionTip = false;
+import VueClipboard from 'vue3-clipboard'
 
-const pinia = createPinia()
+const pinia = createPinia();
+const app = createApp(App);
+
+for (const [key, comp] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, comp);
+}
+
+app.use(ElementPlus);
+app.use(pinia);
+app.use(router);
+app.use(VueClipboard, {
+    autoSetContainer: true,
+    appendToBody: true,
+})
 
 
-new Vue({
-  router,
-  pinia,
-  render: (h) => h(App),
-}).$mount("#app");
+app.mount("#app");

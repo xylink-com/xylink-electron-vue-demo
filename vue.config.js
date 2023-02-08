@@ -1,6 +1,7 @@
+const { defineConfig } = require('@vue/cli-service');
 const path = require("path");
-
-module.exports = {
+module.exports = defineConfig({
+  transpileDependencies: true,
   pluginOptions: {
     electronBuilder: {
       nodeIntegration: true,
@@ -84,6 +85,15 @@ module.exports = {
       },
     },
   },
+  configureWebpack: {
+    module: {
+      rules: [{
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: "javascript/auto"
+      }]
+    }
+  },
   chainWebpack: (config) => {
     config.module
       .rule("node")
@@ -107,5 +117,5 @@ module.exports = {
         return options;
       })
       .end();
-  },
-};
+    }
+})

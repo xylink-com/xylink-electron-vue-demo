@@ -9,10 +9,6 @@ export const useToolbarStore = defineStore('toolbar', {
     }
 
   },
-  getters() { },
-  actions: {
-
-  },
 })
 
 // 'XY' = 'xyLogin',

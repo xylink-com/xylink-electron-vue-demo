@@ -30,6 +30,7 @@ export default {
       } ${this.isHide ? "reminder-hide" : "reminder-show"}`;
     },
   },
+  emits: ["stopMeeting"],
   data() {
     return {
       actionMap: {
@@ -59,7 +60,7 @@ export default {
       this.isHideContent = !this.isHideContent;
     },
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.remindersTemp = [];
     clearInterval(this.queueTimer);
     this.queueTimer = null;

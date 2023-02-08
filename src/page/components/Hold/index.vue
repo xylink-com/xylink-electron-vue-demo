@@ -14,7 +14,6 @@
   </div>
 </template>
 <script>
-import { Fragment } from "vue-fragment";
 export default {
   props: ["stopMeeting", "conferenceInfo"],
 
@@ -25,7 +24,6 @@ export default {
     };
   },
   components: {
-    Fragment,
   },
   watch: {},
 };

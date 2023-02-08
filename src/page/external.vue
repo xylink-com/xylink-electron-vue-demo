@@ -12,7 +12,8 @@
   </div>
 </template>
 <script>
-import { ipcRenderer, remote } from "electron";
+import { ipcRenderer } from "electron";
+import remote from "@electron/remote";
 import Video from "./components/Video";
 
 export default {
@@ -48,7 +49,7 @@ export default {
   mounted() {
     const _this = this;
     ipcRenderer.on("externalLayout", function(event, msg) {
-      _this.layout = msg.layout;
+      _this.layout =JSON.parse(msg);
     });
   },
   methods: {},

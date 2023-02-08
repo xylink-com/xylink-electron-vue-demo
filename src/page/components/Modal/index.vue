@@ -1,8 +1,8 @@
 <template>
   <el-dialog
     title="设置"
-    custom-class="xy__setting-dialog"
-    :visible="visible"
+    class="xy__setting-dialog"
+    :model-value="visible"
     :before-close="handleCancel"
   >
     <el-row class="mb15">
@@ -19,7 +19,7 @@
         />
       </el-col>
       <el-col :span="4">
-        <el-button type="text" @click="handleOk"> 设置 </el-button>
+        <el-button link @click="handleOk"> 设置 </el-button>
       </el-col>
     </el-row>
 
@@ -85,13 +85,14 @@
   </el-dialog>
 </template>
 <script>
+import xyRTC from '@/utils/xyRTC';
 const DEFAULT_DEVICE = {
   camera: "",
   microphone: "",
   speaker: "",
 };
 export default {
-  props: ["visible", "value", "xyRTC", "deviceChangeType"],
+  props: ["visible", "value", "deviceChangeType"],
   data() {
     return {
       proxy: this.value,
@@ -102,16 +103,17 @@ export default {
       selectedDeviceRef: DEFAULT_DEVICE,
     };
   },
+  emits:['cancel','ok'],
   mounted() {
     this.updateDevices();
   },
   methods: {
     handleCancel() {
-      this.$emit("Cancel");
+      this.$emit("cancel");
     },
     handleOk() {
       if (this.value !== this.proxy) {
-        this.$emit("Ok", this.proxy);
+        this.$emit("ok", this.proxy);
       } else {
         this.handleCancel();
       }
@@ -121,14 +123,15 @@ export default {
       await this.updateMicrophoneDevices();
       await this.updateSpeakerDevices();
 
+
       this.selectedDevice = this.selectedDeviceRef;
     },
     async updateCameraDevices() {
-      if (!this.xyRTC) {
+      if (!xyRTC) {
         return;
       }
 
-      const camera = await this.xyRTC.getDeviceList("camera");
+      const camera = await xyRTC.getDeviceList("camera");
 
       const selectedId = this.updateSelectedDevice(camera);
 
@@ -145,11 +148,11 @@ export default {
     },
 
     async updateMicrophoneDevices() {
-      if (!this.xyRTC) {
+      if (!xyRTC) {
         return;
       }
 
-      const microphone = await this.xyRTC.getDeviceList("microphone");
+      const microphone = await xyRTC.getDeviceList("microphone");
       const selectedId = this.updateSelectedDevice(microphone);
 
       this.microphoneList = microphone;
@@ -165,11 +168,11 @@ export default {
     },
 
     async updateSpeakerDevices() {
-      if (!this.xyRTC) {
+      if (!xyRTC) {
         return;
       }
 
-      const speaker = await this.xyRTC.getDeviceList("speaker");
+      const speaker = await xyRTC.getDeviceList("speaker");
       const selectedId = this.updateSelectedDevice(speaker);
 
       this.speakerList = speaker;
@@ -199,7 +202,7 @@ export default {
 
     async onSwitchCamera(val) {
       try {
-        await this.xyRTC.switchDevice("camera", val);
+        await xyRTC.switchDevice("camera", val);
       } catch (err) {
         console.log("switch camera device error: ", err);
       }
@@ -207,7 +210,7 @@ export default {
 
     async onSwitchMicrophone(val) {
       try {
-        await this.xyRTC.switchDevice("microphone", val);
+        await xyRTC.switchDevice("microphone", val);
       } catch (err) {
         console.log("switch microphone device error: ", err);
       }
@@ -215,7 +218,7 @@ export default {
 
     async onSwitchSpeaker(val) {
       try {
-        await this.xyRTC.switchDevice("speaker", val);
+        await xyRTC.switchDevice("speaker", val);
       } catch (err) {
         console.log("switch speaker device error: ", err);
       }

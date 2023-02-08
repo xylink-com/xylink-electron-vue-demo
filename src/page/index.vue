@@ -194,7 +194,7 @@ import Hold from "./components/Hold/index.vue";
 import More from "./components/More/index.vue";
 import { useCallStateStore, farEndControlStore } from "../store/index";
 import { mapWritableState } from 'pinia';
-import FarEndControl from './components/FarEndControl/index.jsx'
+import FarEndControl from './components/FarEndControl/index.vue'
 
 const store = new Store();
 

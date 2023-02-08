@@ -2234,11 +2234,12 @@
   resolved "https://registry.npmmirror.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@xylink/xy-electron-sdk@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.npmmirror.com/@xylink/xy-electron-sdk/-/xy-electron-sdk-1.0.1.tgz#d62599691232f3634bed6c949d6a6bb3ef7af459"
-  integrity sha512-lelGFyblkX2mHxbqFSGb6C80nVj8otQtXg4deCYASLbzcDb681LS2WJViM9ncKAlWlsBUV6T6W/g/1uV3pPCxg==
+"@xylink/xy-electron-sdk@^1.0.2-beta.1":
+  version "1.0.2-beta.1"
+  resolved "https://fe-private-npm.xylink.com/@xylink%2fxy-electron-sdk/-/xy-electron-sdk-1.0.2-beta.1.tgz#f4916ec31f949bb2007f3e363a3f938476cb9ac2"
+  integrity sha512-QGHuBtjslgIeVQRWhN9fhTFr7EUGBgJYy5IG8bPVsgk4hGoU8XQN0N/QZ8yAGDITMO4DbXodpsYtR4673Mmgvw==
   dependencies:
+    dayjs "^1.11.6"
     download "^8.0.0"
     semver "^7.3.2"
     shelljs "^0.8.4"
@@ -4010,7 +4011,7 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
-dayjs@^1.11.3:
+dayjs@^1.11.3, dayjs@^1.11.6:
   version "1.11.7"
   resolved "https://registry.npmmirror.com/dayjs/-/dayjs-1.11.7.tgz#4b296922642f70999544d1144a2c25730fce63e2"
   integrity sha512-+Yw9U6YO5TQohxLcIkrXBeY73WP3ejHWVvx8XCk3gxvQDCTEmS48ZrSZCKciI7Bhl/uCMyxYtE9UqRILmFphkQ==

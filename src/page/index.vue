@@ -153,6 +153,7 @@
                   {{ isExternal ? "关闭外接" : "打开外接" }}
                 </dd> -->
                   <dd @click="toggleProxyModal">设置</dd>
+                  <dd @click="onFarEndControl">{{ farEndShow ? '退出遥控模式' : '遥控摄像头' }}</dd>
                 </dl>
               </template>
             </More>
@@ -164,6 +165,7 @@
             </div>
           </div>
         </div>
+        <FarEndControl v-if="showFarEnd" />
       </div>
       <Hold v-if="holdInfo.isOnhold" :conferenceInfo="conferenceInfo" :stopMeeting="hangup" />
     </div>
@@ -178,7 +180,7 @@ import remote from "@electron/remote";
 import { USER_INFO, RECORD_STATE_MAP } from "../utils/enum";
 import { DEFAULT_PROXY } from "../config";
 import { TEMPLATE } from "../utils/template";
-import { getScreenInfo } from "../utils/index";
+import { getScreenInfo, farEndControlSupport } from "../utils/index";
 import { ElMessage as Message } from "element-plus";
 import cloneDeep from "clone-deep";
 import Video from "./components/Video/index.vue";
@@ -190,8 +192,9 @@ import MeetingHeader from "./components/Header/index.vue";
 import NmberKeyBoard from "./components/NumberKeyBoard/index.vue";
 import Hold from "./components/Hold/index.vue";
 import More from "./components/More/index.vue";
-import { useCallStateStore } from "../store/index";
+import { useCallStateStore, farEndControlStore } from "../store/index";
 import { mapWritableState } from 'pinia';
+import FarEndControl from './components/FarEndControl/index.jsx'
 
 const store = new Store();
 
@@ -224,6 +227,7 @@ export default {
     NmberKeyBoard,
     Hold,
     More,
+    FarEndControl
   },
   data() {
     return {
@@ -423,7 +427,15 @@ export default {
         participantCount === 1
       );
     },
-    ...mapWritableState(useCallStateStore, ['callState'])
+    ...mapWritableState(useCallStateStore, ['callState']),
+    ...mapWritableState(farEndControlStore, {
+      farEndCallUri: 'callUri',
+      farEndShow: 'show',
+      farEndFeccOri: 'feccOri'
+    }),
+    showFarEnd() {
+      return this.farEndShow && !!this.farEndCallUri
+    }
   },
   mounted() {
     const version = xyRTC.getVersion();
@@ -750,6 +762,14 @@ export default {
     });
   },
   methods: {
+    onFarEndControl() {
+      if (!this.farEndShow && !this.farEndCallUri) {
+        message.info('当前没有可以控制的摄像头')
+        return;
+      }
+
+      this.farEndShow = !this.farEndShow
+    },
     logout() {
       xyRTC.logout();
     },
@@ -830,6 +850,7 @@ export default {
         canRecord: true,
         confCanRecord: true,
       };
+      this.farEndShow = false;
 
       xyRTC.endCall();
     },
@@ -1194,6 +1215,23 @@ export default {
     info: {
       handler(newValue) {
         store.set("xyUserInfo", newValue);
+      },
+      deep: true,
+    },
+    layout: {
+      handler(newValue) {
+        const term = newValue.find(item => {
+          const isSupportFarControl = farEndControlSupport(item.roster.feccOri).supportSome;
+          const isInBigScreen = item.position.width > (this.screenInfo.layoutWidth || 0) * 0.5;
+          return isSupportFarControl && isInBigScreen;
+        });
+
+        console.log('term',term)
+
+        this.farEndCallUri = term?.roster.callUri || '';
+        this.farEndFeccOri = term?.roster.feccOri;
+
+        console.log('this.farEndCallUri', this.farEndCallUri)
       },
       deep: true,
     },

@@ -22,3 +22,20 @@ export const useCallStateStore = defineStore('callState', {
     }
   }
 });
+
+/**
+ * 遥控摄像头参数
+ *
+ * @property {boolean} show - 是否展示遥控操作按钮
+ * @property {string} callUri - 支持遥控摄像头的终端标识
+ * @property {number} feccOri - 支持遥控摄像头的终端的指令标识
+ */
+export const farEndControlStore = defineStore('farEndControl', {
+  state: () => {
+    return {
+      show: false, // 是否显示
+      callUri: '',
+      feccOri: ''
+    }
+  }
+});

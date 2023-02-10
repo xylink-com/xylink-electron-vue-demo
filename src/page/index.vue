@@ -4,7 +4,6 @@
       <SettingModal
         :model-value="visible"
         :value="proxy"
-        :deviceChangeType="deviceChangeType"
         @cancel="toggleProxyModal"
         @ok="onSettingProxy"
       />
@@ -265,7 +264,6 @@ export default {
         },
       ],
       micLevel: 0,
-      deviceChangeType: "",
       pageInfo: defaultPageInfo,
       cachePageInfo: defaultPageInfo,
       cacheConfInfo: {
@@ -579,12 +577,6 @@ export default {
     // 实时获取麦克风声量大小（0-100）
     xyRTC.on("MicEnergyReported", (value) => {
       this.micLevel = value;
-    });
-
-    // 麦克风/摄像头设备变化事件
-    xyRTC.on("MediaDeviceEvent", (value) => {
-      console.log("device change type:", value);
-      this.deviceChangeType = value;
     });
 
     // 会议控制消息
@@ -1225,7 +1217,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .el-row {
   max-width: 500px;
   margin: 30px auto 20px;

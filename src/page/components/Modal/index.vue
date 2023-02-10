@@ -22,77 +22,18 @@
         <el-button link @click="handleOk"> 设置 </el-button>
       </el-col>
     </el-row>
-
-    <el-row class="mb15">
-      <el-col :span="4" class="center">
-        <span>摄像头</span>
-      </el-col>
-      <el-col :span="20">
-        <el-select
-          :style="{ width: '300px' }"
-          v-model="selectedDevice.camera"
-          @change="onSelectCamera"
-        >
-          <el-option
-            v-for="item in cameraList"
-            :key="item.devId"
-            :value="item.devId"
-            :label="item.devName"
-          />
-        </el-select>
-      </el-col>
-    </el-row>
-
-    <el-row class="mb15">
-      <el-col :span="4" class="center">
-        <span>麦克风</span>
-      </el-col>
-      <el-col :span="20">
-        <el-select
-          :style="{ width: '300px' }"
-          v-model="selectedDevice.microphone"
-          @change="onSelectMicrophone"
-        >
-          <el-option
-            v-for="item in microphoneList"
-            :key="item.devId"
-            :value="item.devId"
-            :label="item.devName"
-          />
-        </el-select>
-      </el-col>
-    </el-row>
-
-    <el-row class="mb15">
-      <el-col :span="4" class="center">
-        <span>扬声器</span>
-      </el-col>
-      <el-col :span="20">
-        <el-select
-          :style="{ width: '300px' }"
-          v-model="selectedDevice.speaker"
-          @change="onSelectSpeaker"
-        >
-          <el-option
-            v-for="item in speakerList"
-            :key="item.devId"
-            :value="item.devId"
-            :label="item.devName"
-          />
-        </el-select>
-      </el-col>
-    </el-row>
+    <Device/>
   </el-dialog>
 </template>
 <script>
-import xyRTC from '@/utils/xyRTC';
+import Device from './device.vue'
 const DEFAULT_DEVICE = {
   camera: "",
   microphone: "",
   speaker: "",
 };
 export default {
-  props: ["visible", "value", "deviceChangeType"],
+  props: ["visible", "value"],
   data() {
     return {
       proxy: this.value,
@@ -104,8 +45,8 @@ export default {
     };
   },
   emits:['cancel','ok'],
-  mounted() {
-    this.updateDevices();
+  components:{
+    Device
   },
   methods: {
     handleCancel() {
@@ -117,160 +58,6 @@ export default {
       } else {
         this.handleCancel();
       }
-    },
-    async updateDevices() {
-      await this.updateCameraDevices();
-      await this.updateMicrophoneDevices();
-      await this.updateSpeakerDevices();
-
-
-      this.selectedDevice = this.selectedDeviceRef;
-    },
-    async updateCameraDevices() {
-      if (!xyRTC) {
-        return;
-      }
-
-      const camera = await xyRTC.getDeviceList("camera");
-
-      const selectedId = this.updateSelectedDevice(camera);
-
-      this.cameraList = camera;
-
-      if (selectedId !== this.selectedDevice.camera) {
-        this.onSwitchCamera(selectedId);
-      }
-
-      this.selectedDeviceRef = {
-        ...this.selectedDeviceRef,
-        camera: selectedId,
-      };
-    },
-
-    async updateMicrophoneDevices() {
-      if (!xyRTC) {
-        return;
-      }
-
-      const microphone = await xyRTC.getDeviceList("microphone");
-      const selectedId = this.updateSelectedDevice(microphone);
-
-      this.microphoneList = microphone;
-
-      if (selectedId !== this.selectedDevice.microphone) {
-        this.onSwitchMicrophone(selectedId);
-      }
-
-      this.selectedDeviceRef = {
-        ...this.selectedDeviceRef,
-        microphone: selectedId,
-      };
-    },
-
-    async updateSpeakerDevices() {
-      if (!xyRTC) {
-        return;
-      }
-
-      const speaker = await xyRTC.getDeviceList("speaker");
-      const selectedId = this.updateSelectedDevice(speaker);
-
-      this.speakerList = speaker;
-
-      if (selectedId !== this.selectedDevice.speaker) {
-        this.onSwitchSpeaker(selectedId);
-      }
-
-      this.selectedDeviceRef = {
-        ...this.selectedDeviceRef,
-        speaker: selectedId,
-      };
-    },
-
-    updateSelectedDevice(list) {
-      let selectedId = "";
-      const selectedDevice = list.filter((item) => item.isSelected);
-
-      if (selectedDevice.length > 0) {
-        selectedId = selectedDevice[0].devId;
-      } else if (list.length > 0) {
-        selectedId = list[0].devId;
-      }
-
-      return selectedId;
-    },
-
-    async onSwitchCamera(val) {
-      try {
-        await xyRTC.switchDevice("camera", val);
-      } catch (err) {
-        console.log("switch camera device error: ", err);
-      }
-    },
-
-    async onSwitchMicrophone(val) {
-      try {
-        await xyRTC.switchDevice("microphone", val);
-      } catch (err) {
-        console.log("switch microphone device error: ", err);
-      }
-    },
-
-    async onSwitchSpeaker(val) {
-      try {
-        await xyRTC.switchDevice("speaker", val);
-      } catch (err) {
-        console.log("switch speaker device error: ", err);
-      }
-    },
-
-    async onSelectCamera(val) {
-      this.selectedDevice = {
-        ...this.selectedDevice,
-        camera: val,
-      };
-
-      this.onSwitchCamera(val);
-    },
-
-    async onSelectMicrophone(val) {
-      this.selectedDevice = {
-        ...this.selectedDevice,
-        microphone: val,
-      };
-
-      this.onSwitchMicrophone(val);
-    },
-
-    async onSelectSpeaker(val) {
-      this.selectedDevice = {
-        ...this.selectedDevice,
-        speaker: val,
-      };
-
-      console.log("onSelectSpeaker:::::", val);
-
-      this.onSwitchSpeaker(val);
-    },
-  },
-  watch: {
-    visible: {
-      handler(newValue) {
-        if (newValue) {
-          this.updateDevices();
-        }
-      },
-    },
-    async deviceChangeType(newValue) {
-      if (newValue === "camera") {
-        await this.updateCameraDevices();
-      } else if (newValue === "microphone") {
-        await this.updateMicrophoneDevices();
-      } else if (newValue === "speaker") {
-        await this.updateSpeakerDevices();
-      }
-
-      this.selectedDevice = this.selectedDeviceRef;
     },
   },
 };

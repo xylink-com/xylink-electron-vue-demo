@@ -6,8 +6,7 @@ import Store from "electron-store";
 import { DEFAULT_PROXY } from "@/config";
 import { useCallStateStore } from "@/store/index";
 import { ElMessage } from "element-plus";
-import "./index.scss";
-
+import style from "./index.module.css";
 // 静态数据
 const store = new Store();
 
@@ -82,7 +81,7 @@ const makeCall = () => {
 </script>
 <template>
   <div>
-    <div class="login">
+    <div :class="[style.login, 'login']">
       <span class="version">version: {{ versionRef }}</span>
       <h1 class="xy__demo-title">XY ELECTRON DEV</h1>
       <div class="xy__demo-line">
@@ -103,23 +102,27 @@ const makeCall = () => {
         </div>
       </div>
 
-      <el-row v-if="callState === 'externalLogin'" justify="center">
+      <el-row
+        :class="style.elRow"
+        v-if="callState === 'externalLogin'"
+        justify="center"
+      >
         <el-input
-          class="text"
+          :class="style.text"
           placeholder="extID"
           v-model="info.extID"
           clearable
         ></el-input>
 
         <el-input
-          class="text"
+          :class="style.text"
           placeholder="extUserId"
           v-model="info.extUserId"
           clearable
         ></el-input>
 
         <el-input
-          class="text"
+          :class="style.text"
           placeholder="displayName"
           v-model="info.displayName"
           clearable
@@ -131,39 +134,43 @@ const makeCall = () => {
         </div>
       </el-row>
 
-      <el-row v-if="callState === 'logined'" justify="center">
+      <el-row
+        :class="style.elRow"
+        v-if="callState === 'logined'"
+        justify="center"
+      >
         <el-input
-          class="text"
+          :class="style.text"
           placeholder="会议号"
           v-model="info.meeting"
           clearable
         ></el-input>
 
         <el-input
-          class="text"
+          :class="style.text"
           placeholder="入会密码"
           v-model="info.meetingPassword"
           clearable
         ></el-input>
 
         <el-input
-          class="text"
+          :class="style.text"
           placeholder="入会昵称"
           v-model="info.meetingName"
           clearable
         ></el-input>
 
-        <div class="text">
+        <div :class="style.text">
           <el-checkbox v-model="info.video">开启摄像头</el-checkbox>
           <el-checkbox v-model="info.audio">开启麦克风</el-checkbox>
         </div>
         <div>
-          <el-button class="xy__login-btn" type="primary" @click="makeCall"
-            >呼叫</el-button
-          >
+          <el-button type="primary" @click="makeCall">呼叫</el-button>
         </div>
         <div>
-          <span class="login-type" @click="onLogout">注销</span>
+          <span :class="[style.loginType, 'login-type']" @click="onLogout"
+            >注销</span
+          >
         </div>
       </el-row>
     </div>

@@ -1,62 +1,25 @@
 <template>
   <div id="app">
     <div class="container">
-      <SettingModal :model-value="visible" :value="proxy" :deviceChangeType="deviceChangeType"
-        @cancel="toggleProxyModal" @ok="onSettingProxy" />
-
-      <div>
-        <div class="login">
-          <span class="version">version: {{ version }}</span>
-          <h1 class="xy__demo-title">XY ELECTRON DEV</h1>
-          <div class="xy__demo-line">
-            <div>
-              <span>{{ env }} 环境</span>
-              <span @click="toggleProxyModal" class="xy_setting"> [设置] </span>
-            </div>
-            <div :style="{ marginLeft: '20px' }">
-              <span>布局模式：</span>
-              <el-select v-model="model" @change="switchModel">
-                <el-option v-for="item in modelList" :value="item.value" :key="item.value" :label="item.label" />
-              </el-select>
-            </div>
-          </div>
-
-          <el-row v-if="callState === 'externalLogin'" justify="center">
-            <el-input class="text" placeholder="extID" v-model="info.extID" clearable></el-input>
-
-            <el-input class="text" placeholder="extUserId" v-model="info.extUserId" clearable></el-input>
-
-            <el-input class="text" placeholder="displayName" v-model="info.displayName" clearable></el-input>
-            <div>
-              <el-button type="primary" @click="externalLogin">第三方登录</el-button>
-            </div>
-          </el-row>
-
-          <el-row v-if="callState === 'logined'" justify="center">
-            <el-input class="text" placeholder="会议号" v-model="info.meeting" clearable></el-input>
-
-            <el-input class="text" placeholder="入会密码" v-model="info.meetingPassword" clearable></el-input>
-
-            <el-input class="text" placeholder="入会昵称" v-model="info.meetingName" clearable></el-input>
-
-            <div class="text">
-              <el-checkbox v-model="info.video">开启摄像头</el-checkbox>
-              <el-checkbox v-model="info.audio">开启麦克风</el-checkbox>
-            </div>
-            <div>
-              <el-button class="xy__login-btn" type="primary" @click="makeCall">呼叫</el-button>
-            </div>
-            <div>
-              <span class="login-type" @click="onLogout">注销</span>
-            </div>
-          </el-row>
-        </div>
-      </div>
-
+      <SettingModal
+        :model-value="visible"
+        :value="proxy"
+        :deviceChangeType="deviceChangeType"
+        @cancel="toggleProxyModal"
+        @ok="onSettingProxy"
+      />
+      <Login
+        :info="info"
+        @toggleProxyModal="toggleProxyModal"
+        v-model:model="model"
+      />
       <div class="loading" v-if="callState === 'calling'">
         <div class="loading-content">
           <div class="avatar">
-            <img src="https://cdn.xylink.com/wechatMP/images/device_cm_ios%402x.png" alt="nemo-avatar" />
+            <img
+              src="https://cdn.xylink.com/wechatMP/images/device_cm_ios%402x.png"
+              alt="nemo-avatar"
+            />
           </div>
           <div class="name">正在呼叫</div>
           <div class="stop" @click="hangup">
@@ -66,20 +29,39 @@
         </div>
       </div>
 
-      <MeetingHeader v-if="callState === 'meeting'" :conferenceInfo="conferenceInfo" :holdInfo="holdInfo" />
+      <MeetingHeader
+        v-if="callState === 'meeting'"
+        :conferenceInfo="conferenceInfo"
+        :holdInfo="holdInfo"
+      />
 
       <div v-if="callState === 'meeting' && !holdInfo.isOnhold">
         <div class="meeting-content">
-          <PromptInfo :recordPermission="recordPermission" :isRecordPaused="isRecordPaused" :recordStatus="recordStatus"
-            :forceFullScreenId="forceFullScreenId" :setForceFullScreen="setForceFullScreen"
-            :isLocalShareContent="shareContentStatus === 1" :chirmanUri="chirmanUri" :content="contentInfo" />
+          <PromptInfo
+            :recordPermission="recordPermission"
+            :isRecordPaused="isRecordPaused"
+            :recordStatus="recordStatus"
+            :forceFullScreenId="forceFullScreenId"
+            :setForceFullScreen="setForceFullScreen"
+            :isLocalShareContent="shareContentStatus === 1"
+            :chirmanUri="chirmanUri"
+            :content="contentInfo"
+          />
 
           <div class="meeting-layout" :style="layoutStyle">
-            <Video v-for="val in layoutList" :key="val.key" :item="val" :templateModel="templateModel"
-              :toggleForceFullScreen="() => toggleForceFullScreen(val.id)"></Video>
+            <Video
+              v-for="val in layoutList"
+              :key="val.key"
+              :item="val"
+              :templateModel="templateModel"
+              :toggleForceFullScreen="() => toggleForceFullScreen(val.id)"
+            ></Video>
           </div>
 
-          <Barrage v-if="subTitle.content && subTitle.action === 'push'" :subTitle="subTitle" />
+          <Barrage
+            v-if="subTitle.content && subTitle.action === 'push'"
+            :subTitle="subTitle"
+          />
 
           <InOutReminder :reminders="inOutReminders" />
         </div>
@@ -107,7 +89,11 @@
               </div>
             </div>
 
-            <div v-if="shareContentStatus === 1" @click="stopShareContent" class="button share">
+            <div
+              v-if="shareContentStatus === 1"
+              @click="stopShareContent"
+              class="button share"
+            >
               <div class="icon"></div>
               <div class="title">结束共享</div>
             </div>
@@ -133,7 +119,10 @@
             <div @click="audioOperate" :class="audioStatus.className">
               <div class="icon"></div>
               <div class="aec" v-if="audio === 'unmute'">
-                <div class="aec_content" :style="{ transform: `translateY(-${micLevel}%)` }" />
+                <div
+                  class="aec_content"
+                  :style="{ transform: `translateY(-${micLevel}%)` }"
+                />
               </div>
 
               <div class="title">{{ audioStatus.status }}</div>
@@ -153,7 +142,9 @@
                   {{ isExternal ? "关闭外接" : "打开外接" }}
                 </dd> -->
                   <dd @click="toggleProxyModal">设置</dd>
-                  <dd @click="onFarEndControl">{{ farEndShow ? '退出遥控模式' : '遥控摄像头' }}</dd>
+                  <dd @click="onFarEndControl">
+                    {{ farEndShow ? "退出遥控模式" : "遥控摄像头" }}
+                  </dd>
                 </dl>
               </template>
             </More>
@@ -167,7 +158,11 @@
         </div>
         <FarEndControl v-if="showFarEnd" />
       </div>
-      <Hold v-if="holdInfo.isOnhold" :conferenceInfo="conferenceInfo" :stopMeeting="hangup" />
+      <Hold
+        v-if="holdInfo.isOnhold"
+        :conferenceInfo="conferenceInfo"
+        :stopMeeting="hangup"
+      />
     </div>
   </div>
 </template>
@@ -193,8 +188,9 @@ import NmberKeyBoard from "./components/NumberKeyBoard/index.vue";
 import Hold from "./components/Hold/index.vue";
 import More from "./components/More/index.vue";
 import { useCallStateStore, farEndControlStore } from "../store/index";
-import { mapWritableState } from 'pinia';
-import FarEndControl from './components/FarEndControl/index.vue'
+import { mapWritableState } from "pinia";
+import FarEndControl from "./components/FarEndControl/index.vue";
+import Login from "./components/Login/index.vue";
 
 const store = new Store();
 
@@ -227,7 +223,8 @@ export default {
     NmberKeyBoard,
     Hold,
     More,
-    FarEndControl
+    FarEndControl,
+    Login,
   },
   data() {
     return {
@@ -379,10 +376,11 @@ export default {
       return false;
     },
     recordStyle() {
-      return `button ${this.recordStatus === RECORD_STATE_MAP.acting
-        ? "pause_record"
-        : "record"
-        } ${this.disableRecord ? "disabled-button" : ""}`;
+      return `button ${
+        this.recordStatus === RECORD_STATE_MAP.acting
+          ? "pause_record"
+          : "record"
+      } ${this.disableRecord ? "disabled-button" : ""}`;
     },
     recordText() {
       return this.recordStatus === RECORD_STATE_MAP.acting
@@ -427,15 +425,15 @@ export default {
         participantCount === 1
       );
     },
-    ...mapWritableState(useCallStateStore, ['callState']),
+    ...mapWritableState(useCallStateStore, ["callState"]),
     ...mapWritableState(farEndControlStore, {
-      farEndCallUri: 'callUri',
-      farEndShow: 'show',
-      farEndFeccOri: 'feccOri'
+      farEndCallUri: "callUri",
+      farEndShow: "show",
+      farEndFeccOri: "feccOri",
     }),
     showFarEnd() {
-      return this.farEndShow && !!this.farEndCallUri
-    }
+      return this.farEndShow && !!this.farEndCallUri;
+    },
   },
   mounted() {
     const version = xyRTC.getVersion();
@@ -539,7 +537,7 @@ export default {
         4003: "登录过期",
       };
 
-      this.onLogout();
+      xyRTC.logout();
 
       message.info(`账号异常：${errorMap[e] || "未知异常，重新登录"}`);
     });
@@ -764,11 +762,11 @@ export default {
   methods: {
     onFarEndControl() {
       if (!this.farEndShow && !this.farEndCallUri) {
-        message.info('当前没有可以控制的摄像头')
+        message.info("当前没有可以控制的摄像头");
         return;
       }
 
-      this.farEndShow = !this.farEndShow
+      this.farEndShow = !this.farEndShow;
     },
     logout() {
       xyRTC.logout();
@@ -781,15 +779,6 @@ export default {
     },
     toggleProxyModal() {
       this.visible = !this.visible;
-    },
-    externalLogin() {
-      const { extID, extUserId, displayName } = this.info;
-
-      // displayName中文在mac上可能会导致乱码，需要转成UTF-8
-      xyRTC.loginExternalAccount(extID, extUserId, encodeURI(displayName));
-    },
-    onLogout() {
-      xyRTC.logout();
     },
     makeCall() {
       // 登录&连接服务器成功，可以入会
@@ -952,12 +941,6 @@ export default {
         xyRTC.muteCamera(false);
       }
     },
-    switchModel(val) {
-      console.log("val: ", val);
-      store.set("xyLayoutModel", val);
-      this.model = val;
-      ipcRenderer.send("relaunch", val);
-    },
     calculateBaseLayoutList(list) {
       const { rateHeight, rateWidth } = this.cacheScreenInfo;
 
@@ -1083,10 +1066,10 @@ export default {
           type === "next"
             ? currentPage + 1
             : type === "previous"
-              ? currentPage - 1
-              : type === "home"
-                ? 0
-                : type;
+            ? currentPage - 1
+            : type === "home"
+            ? 0
+            : type;
 
         xyRTC.switchPage(targetPage).then(
           (res) => console.log("switch page success: ", res),
@@ -1220,18 +1203,21 @@ export default {
     },
     layout: {
       handler(newValue) {
-        const term = newValue.find(item => {
-          const isSupportFarControl = farEndControlSupport(item.roster.feccOri).supportSome;
-          const isInBigScreen = item.position.width > (this.screenInfo.layoutWidth || 0) * 0.5;
+        const term = newValue.find((item) => {
+          const isSupportFarControl = farEndControlSupport(
+            item.roster.feccOri
+          ).supportSome;
+          const isInBigScreen =
+            item.position.width > (this.screenInfo.layoutWidth || 0) * 0.5;
           return isSupportFarControl && isInBigScreen;
         });
 
-        console.log('term',term)
+        console.log("term", term);
 
-        this.farEndCallUri = term?.roster.callUri || '';
+        this.farEndCallUri = term?.roster.callUri || "";
         this.farEndFeccOri = term?.roster.feccOri;
 
-        console.log('this.farEndCallUri', this.farEndCallUri)
+        console.log("this.farEndCallUri", this.farEndCallUri);
       },
       deep: true,
     },
@@ -1239,7 +1225,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .el-row {
   max-width: 500px;
   margin: 30px auto 20px;

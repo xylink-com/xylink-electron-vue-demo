@@ -63,6 +63,7 @@
           />
 
           <InOutReminder :reminders="inOutReminders" />
+          <SignIn v-if="1 === interactiveStore.processType" />
         </div>
 
         <div class="meeting-footer">
@@ -186,10 +187,16 @@ import MeetingHeader from "./components/Header/index.vue";
 import NmberKeyBoard from "./components/NumberKeyBoard/index.vue";
 import Hold from "./components/Hold/index.vue";
 import More from "./components/More/index.vue";
-import { useCallStateStore, farEndControlStore } from "../store/index";
-import { mapWritableState } from "pinia";
+import {
+  useCallStateStore,
+  farEndControlStore,
+  useInteractive,
+  useSignIn,
+} from "../store/index";
+import { mapStores, mapWritableState } from "pinia";
 import FarEndControl from "./components/FarEndControl/index.vue";
 import Login from "./components/Login/index.vue";
+import SignIn from "./components/SignIn/index.vue";
 
 const store = new Store();
 
@@ -224,6 +231,7 @@ export default {
     More,
     FarEndControl,
     Login,
+    SignIn,
   },
   data() {
     return {
@@ -429,6 +437,7 @@ export default {
       farEndShow: "show",
       farEndFeccOri: "feccOri",
     }),
+    ...mapStores(useInteractive, useSignIn),
     showFarEnd() {
       return this.farEndShow && !!this.farEndCallUri;
     },
@@ -750,6 +759,11 @@ export default {
     xyRTC.on("OnHold", (e) => {
       this.holdInfo = e;
     });
+
+    xyRTC.on("InteractiveToolInfo", (e) => {
+      console.log("onInteractiveToolInfo", e);
+      this.interactiveStore.$patch(e);
+    });
   },
   methods: {
     onFarEndControl() {
@@ -832,7 +846,8 @@ export default {
         confCanRecord: true,
       };
       this.farEndShow = false;
-
+      this.interactiveStore.$reset();
+      this.signInStore.$reset();
       xyRTC.endCall();
     },
     async switchLayout() {

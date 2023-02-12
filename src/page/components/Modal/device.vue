@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, onMounted, onBeforeMount } from "vue";
+import { reactive, onMounted, onBeforeUnmount } from "vue";
 import xyRTC from "@/utils/xyRTC";
 import './index.css'
 const deviceList = reactive({
@@ -45,7 +45,7 @@ onMounted(() => {
   xyRTC.on("CurrentDevice", currentDeviceCallback);
 });
 
-onBeforeMount(() => {
+onBeforeUnmount(() => {
   xyRTC.removeListener("Device", deviceCallback);
   xyRTC.removeListener("CurrentDevice", currentDeviceCallback);
 });

@@ -32,6 +32,7 @@ const onSetVisible = (visible) => {
 const onClickIcon = (e) => {
   e.stopPropagation();
 };
+
 </script>
 <template>
   <el-popover
@@ -43,8 +44,8 @@ const onClickIcon = (e) => {
     popper-class="layout-select-popover"
   >
     <template #reference>
-      <el-icon class="layout-select-icon" @click="onClickIcon">
-        <CaretTop v-show="!visibleRef" />
+      <el-icon class="layout-select-icon" @click="onClickIcon" >
+        <CaretTop v-show="!visibleRef"/>
         <CaretBottom v-show="visibleRef" />
       </el-icon>
     </template>

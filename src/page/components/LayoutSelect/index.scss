@@ -1,6 +1,9 @@
 .layout-select-icon {
-  position: absolute !important;
-  right: 0;
+  cursor: pointer;
+  margin-left: 2px;
+  &:hover{
+    color: #44b5ff;
+  }
 }
 .layout__select {
   font-size: 12px;

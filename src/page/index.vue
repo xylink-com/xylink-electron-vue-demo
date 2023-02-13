@@ -81,12 +81,12 @@
             <div @click="switchLayout" class="button layout">
               <div class="icon"></div>
               <div class="title">窗口布局</div>
-              <LayoutSelect
+            </div>
+            <LayoutSelect
                 :contentPartCount="cacheConfInfo.contentPartCount"
                 :templateModel="templateModel"
                 @switchLayout="switchLayout"
               />
-            </div>
             <div @click="openMeetingControlWin" class="button meeting_host">
               <div class="icon"></div>
               <div class="title">
@@ -180,7 +180,7 @@ import remote from "@electron/remote";
 import { USER_INFO, RECORD_STATE_MAP } from "../utils/enum";
 import { DEFAULT_PROXY } from "../config";
 import { TEMPLATE } from "../utils/template";
-import { getScreenInfo, farEndControlSupport } from "../utils/index";
+import { getScreenInfo, farEndControlSupport, debounce } from "../utils/index";
 import { ElMessage as Message } from "element-plus";
 import cloneDeep from "clone-deep";
 import Video from "./components/Video/index.vue";
@@ -208,11 +208,14 @@ const store = new Store();
 
 const message = {
   info: (message) => {
-    Message.success({ message, duration: 2000, center: true });
+    Message({
+      type: "warning",
+      message,
+      duration: 2000,
+    });
   },
 };
 const proxy = store.get("xyHttpProxy") || DEFAULT_PROXY;
-const env = String(proxy).split(".")[0] || "cloud";
 const MODEL = store.get("xyLayoutModel") || "CUSTOM";
 
 const maxSize = 4;
@@ -242,8 +245,7 @@ export default {
   },
   data() {
     return {
-      version: "",
-      env,
+      cacheStream: [],
       proxy,
       visible: false,
       info: store.get("xyUserInfo") || USER_INFO,
@@ -268,16 +270,6 @@ export default {
       shareContentStatus: 0,
       setting: false,
       model: MODEL,
-      modelList: [
-        {
-          value: "AUTO",
-          label: "自动布局",
-        },
-        {
-          value: "CUSTOM",
-          label: "自定义布局",
-        },
-      ],
       micLevel: 0,
       pageInfo: defaultPageInfo,
       cachePageInfo: defaultPageInfo,
@@ -449,11 +441,14 @@ export default {
       return this.farEndShow && !!this.farEndCallUri;
     },
   },
+  created() {
+    this.debounceVideoStreamLayout = debounce(
+      this.calcCustomVideoStreamLayout,
+      150,
+      100
+    );
+  },
   mounted() {
-    const version = xyRTC.getVersion();
-
-    this.version = version;
-
     // xyRTC.enableAECMode(false);
 
     xyRTC.on("TemplateModelChanged", (e) => {
@@ -484,7 +479,10 @@ export default {
           // start render
           this.callState = "meeting";
 
-          message.info("入会成功");
+          Message({
+            type: "success",
+            message: "入会成功",
+          });
         }
       } else if (state === "Disconnected") {
         message.info(reason);
@@ -498,7 +496,10 @@ export default {
     xyRTC.on("LoginState", (e) => {
       console.log("LoginState", e);
       if (e.state === "Logined") {
-        message.info("登录成功");
+        Message({
+          type: "success",
+          message: "登录成功",
+        });
 
         this.callState = "logined";
       } else if (e.state === "Logouted") {
@@ -507,7 +508,10 @@ export default {
         } else if (e.error === 1030) {
           message.info("密码验证超时");
         } else {
-          message.info("注销成功");
+          Message({
+            type: "success",
+            message: "注销成功",
+          });
         }
 
         this.callState = "externalLogin";
@@ -516,25 +520,9 @@ export default {
 
     // video streams change event
     xyRTC.on("VideoStreams", (e) => {
+      this.cacheStream = e;
       if (this.model === "CUSTOM") {
-        // 每次推送都会携带local数据，如果分页不需要展示，则移除local数据
-        if (this.cachePageInfo.currentPage !== 0) {
-          const localIndex = e.findIndex(
-            (item) => item.sourceId === "LocalPreviewID"
-          );
-
-          if (localIndex >= 0) {
-            e.splice(localIndex, 1);
-          }
-        }
-
-        const nextTemplateRate = TEMPLATE.GALLERY.rate[e.length] || 0.5625;
-        // 此处无id是container的容器，则使用document.body的size计算screen
-        this.cacheScreenInfo = getScreenInfo("app", nextTemplateRate, [92, 0]);
-
-        const nextLayout = this.calculateBaseLayoutList(e);
-
-        this.layout = nextLayout;
+        this.calcCustomVideoStreamLayout();
       } else {
         this.layout = cloneDeep(e);
       }
@@ -758,7 +746,10 @@ export default {
       }
 
       if (e.recordState === RECORD_STATE_MAP.idel) {
-        message.info("云端录制完成，录制视频已保存到云会议室管理员的文件夹中");
+        Message({
+          type: "success",
+          message: "云端录制完成，录制视频已保存到云会议室管理员的文件夹中",
+        });
       }
     });
 
@@ -773,6 +764,27 @@ export default {
     });
   },
   methods: {
+    calcCustomVideoStreamLayout() {
+      const e = this.cacheStream;
+
+      if (this.cachePageInfo.currentPage !== 0) {
+        const localIndex = e.findIndex(
+          (item) => item.sourceId === "LocalPreviewID"
+        );
+
+        if (localIndex >= 0) {
+          e.splice(localIndex, 1);
+        }
+      }
+
+      const nextTemplateRate = TEMPLATE.GALLERY.rate[e.length] || 0.5625;
+      // 此处无id是container的容器，则使用document.body的size计算screen
+      this.cacheScreenInfo = getScreenInfo("app", nextTemplateRate, [92, 0]);
+
+      const nextLayout = this.calculateBaseLayoutList(e);
+
+      this.layout = nextLayout;
+    },
     onFarEndControl() {
       if (!this.farEndShow && !this.farEndCallUri) {
         message.info("当前没有可以控制的摄像头");
@@ -908,7 +920,10 @@ export default {
       try {
         if (this.audio === "unmute") {
           this.audio = "mute";
-          message.info("麦克风已静音");
+          Message({
+            type: "success",
+            message: "麦克风已静音",
+          });
 
           xyRTC.muteMic(true);
         } else {
@@ -925,7 +940,10 @@ export default {
         xyRTC.sendSpeakingRequest();
 
         this.handStatus = true;
-        message.info("发言请求已发送");
+        Message({
+          type: "success",
+          message: "发言请求已发送",
+        });
 
         return;
       }
@@ -1238,6 +1256,14 @@ export default {
         console.log("this.farEndCallUri", this.farEndCallUri);
       },
       deep: true,
+    },
+    callState(newVal) {
+      // 自定义布局处理窗口事件
+      if (newVal === "meeting" && this.model === "CUSTOM") {
+        window.addEventListener("resize", this.debounceVideoStreamLayout);
+      } else {
+        window.removeEventListener("resize", this.debounceVideoStreamLayout);
+      }
     },
   },
 };

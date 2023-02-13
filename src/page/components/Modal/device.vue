@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, onMounted, onBeforeUnmount } from "vue";
 import xyRTC from "@/utils/xyRTC";
-import './index.css'
+import './device.css'
 const deviceList = reactive({
   camera: [],
   microphone: [],

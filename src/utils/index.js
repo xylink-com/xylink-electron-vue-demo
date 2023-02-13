@@ -51,6 +51,29 @@ export const throttle = function (fn, wait) {
   };
 };
 
+export const debounce = function (fn, delay, atleast) {
+  let timer;
+  let previous;
+  return function (...args) {
+    const now = +new Date();
+    const context = this;
+
+    timer && clearTimeout(timer);
+    if (!previous) {
+      previous = now;
+    }
+
+    if (now - previous >= atleast) {
+      fn.apply(context, args);
+      previous = now;
+    } else {
+      timer = setTimeout(function () {
+        fn.apply(context, args);
+      }, delay);
+    }
+  };
+};
+
 
 /**
  * 判断终端是否支持遥控摄像头

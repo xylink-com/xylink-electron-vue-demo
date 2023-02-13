@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount,watchEffect } from "vue";
+import { computed, onMounted, onBeforeUnmount, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
 import xyRTC from "@/utils/xyRTC";
 
@@ -64,14 +64,17 @@ const onCancel = (done) => {
 //   }
 // });
 
-watchEffect(()=>{
-    if (eventType.value === EventType.START || eventType.value === EventType.STOP) {
+watchEffect(() => {
+  if (
+    eventType.value === EventType.START ||
+    eventType.value === EventType.STOP
+  ) {
     console.log("watchEffect");
     // 这里别用$patch
     signInState.modal = true;
     signInState.promp = false;
   }
-})
+});
 
 const dialogSubContent = computed(() => {
   let content = "请点击下方按钮，完成签到";
@@ -106,7 +109,10 @@ const onSubmitSignatureInfosResult = (e) => {
     isSuccess: e.code === 0,
   });
 
-  ElMessage("签到成功");
+  ElMessage({
+    type: "success",
+    message: "签到成功",
+  });
 };
 
 // const onInteractiveToolInfo = (e) => {

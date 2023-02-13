@@ -209,7 +209,7 @@ const store = new Store();
 const message = {
   info: (message) => {
     Message({
-      type: "warning",
+      type: "info",
       message,
       duration: 2000,
     });

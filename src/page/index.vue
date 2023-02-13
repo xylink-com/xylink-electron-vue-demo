@@ -81,6 +81,11 @@
             <div @click="switchLayout" class="button layout">
               <div class="icon"></div>
               <div class="title">窗口布局</div>
+              <LayoutSelect
+                :contentPartCount="cacheConfInfo.contentPartCount"
+                :templateModel="templateModel"
+                @switchLayout="switchLayout"
+              />
             </div>
             <div @click="openMeetingControlWin" class="button meeting_host">
               <div class="icon"></div>
@@ -197,6 +202,7 @@ import { mapStores, mapWritableState } from "pinia";
 import FarEndControl from "./components/FarEndControl/index.vue";
 import Login from "./components/Login/index.vue";
 import SignIn from "./components/SignIn/index.vue";
+import LayoutSelect from "./components/LayoutSelect/index.vue";
 
 const store = new Store();
 
@@ -232,6 +238,7 @@ export default {
     FarEndControl,
     Login,
     SignIn,
+    LayoutSelect,
   },
   data() {
     return {
@@ -851,6 +858,10 @@ export default {
       xyRTC.endCall();
     },
     async switchLayout() {
+      if (this.shareContentStatus === 1) {
+        return;
+      }
+
       try {
         const result = await xyRTC.switchLayout();
 

@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 import { watchEffect, ref, onBeforeUnmount, computed } from "vue";
 
 const secondToMinute = (result) => {
-  console.log('result', result);
   var m =
     Math.floor(result / 60) < 10
       ? "0" + Math.floor(result / 60)
@@ -21,9 +20,6 @@ export default function useTimer(props) {
   let timer;
 
   watchEffect(() => {
-    // clearInterval(timer);
-    // timer = undefined;
-
     if (eventType.value === EventType.START && endAuto.value) {
       timer = setInterval(() => {
         durationRef.value -= 1;
@@ -38,7 +34,7 @@ export default function useTimer(props) {
     timer = undefined;
   });
 
-  const time = computed(()=>{
+  const time = computed(() => {
     if (endAuto.value) {
       return secondToMinute(durationRef.value);
     }
@@ -46,7 +42,7 @@ export default function useTimer(props) {
       return dayjs(endUtcTime.value).format("HH:mm:ss");
     }
     return "";
-  })
+  });
 
   return time;
 }

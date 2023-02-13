@@ -1,4 +1,4 @@
-// "use strict";
+"use strict";
 
 import { app, BrowserWindow, ipcMain, screen } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";

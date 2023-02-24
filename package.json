@@ -22,7 +22,7 @@
     "clone-deep": "^4.0.1",
     "core-js": "^3.8.3",
     "dayjs": "^1.11.7",
-    "electron": "^23.0.0",
+    "electron": "13.6.9",
     "element-plus": "^2.2.28",
     "js-base64": "^3.7.2",
     "pinia": "^2.0.21",
@@ -44,7 +44,7 @@
     "eslint-plugin-vue": "^8.0.3",
     "native-ext-loader": "^2.3.0",
     "node-loader": "^1.0.1",
-    "sass": "^1.37.0",
+    "sass": "^1.58.3",
     "sass-loader": "^10.1.1",
     "vue-cli-plugin-electron-builder": "~2.1.1"
   },

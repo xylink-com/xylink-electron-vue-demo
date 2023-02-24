@@ -87,7 +87,7 @@ export default {
   mounted() {
     this.setScrollTitle(this.subTitle);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     cancelAnimationFrame(intervalTimer);
     intervalTimer = null;
   },

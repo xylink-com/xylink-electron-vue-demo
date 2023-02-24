@@ -1,11 +1,11 @@
 <template>
-  <Fragment>
     <slot name="keyBoardBtn" :open="open"></slot>
     <el-dialog
-      custom-class="xy__setting-modal keyboard-modal"
-      :visible.sync="visible"
+      class="xy__setting-modal keyboard-modal"
+      v-model="visible"
       :before-close="onClose"
       :modal="false"
+      :append-to-body="true"
     >
       <div class="keyboard-box">
         <div class="keyboard-input"><span dir="ltr">{{ number }}</span></div>
@@ -20,11 +20,9 @@
         </ul>
       </div>
     </el-dialog>
-  </Fragment>
 </template>
 <script>
-import { Fragment } from "vue-fragment";
-import RTC from "../../../utils/xyRTC";
+import xyRTC from "../../../utils/xyRTC";
 
 export default {
   computed: {
@@ -36,24 +34,19 @@ export default {
     return {
       visible: false,
       number: "",
-      xyRTC: null,
       numArray: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"],
     };
   },
   components: {
-    Fragment,
   },
   watch: {},
-  mounted() {
-    this.xyRTC = RTC.getInstance();
-  },
-  beforeDestroy() {},
+  beforeUnmount() {},
   methods: {
     sendDtmf(value) {
       // eslint-disable-next-line no-debugger
       const newNumber = this.number + value;
       this.number = newNumber;
-      this.xyRTC.sendDtmf(newNumber);
+      xyRTC.sendDtmf(newNumber);
     },
     onClose(done) {
       this.number = "";

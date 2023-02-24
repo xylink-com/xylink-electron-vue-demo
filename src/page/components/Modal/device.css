@@ -1,0 +1,40 @@
+
+.center {
+  display: flex !important;
+  align-items: center;
+  height: 40px;
+}
+
+.mb15 {
+  margin-bottom: 15px;
+}
+
+.el-row {
+  max-width: 500px;
+  margin: 0 auto 20px;
+}
+
+.xy-row {
+  margin: 0;
+}
+
+.xy__setting-dialog .el-row .text {
+  margin-bottom: 0;
+}
+
+.dialog-footer {
+  text-align: right;
+}
+
+.el-dialog__body {
+  padding: 0 20px;
+}
+
+.el-message {
+  max-width: 300px !important;
+  min-width: 100px !important;
+}
+
+.xy__login-btn.el-button--primary {
+  margin-bottom: 20px;
+}

@@ -3,7 +3,9 @@
     <span class="header-time">
       <div :class="signalStyle" @click="toggleInternal" />
       <el-tooltip class="item" placement="bottom-end">
-        <div slot="content">已经使用{{ encrypt }}加密</div>
+        <template v-slot:content>
+          <div>已经使用{{ encrypt }}加密</div>
+        </template>
         <span class="icon-encrypt" />
       </el-tooltip>
       <Timer v-if="!isOnhold" />
@@ -12,9 +14,9 @@
     <span class="header-conference">
       <span class="header-conference-name">
         {{ conferenceInfo.displayName }}
-        <Fragment v-if="conferenceInfo.numberType !== 'CONFERENCE'">{{
+        <template v-if="conferenceInfo.numberType !== 'CONFERENCE'">{{
           conferenceInfo.meetingNumber
-        }}</Fragment>
+        }}</template>
       </span>
       &nbsp;&nbsp;
       <el-popover
@@ -35,11 +37,13 @@
             v-clipboard:error="onCopyError"
             class="copy"
           >
-            <i class="el-icon-document-copy"></i>
+            <el-icon><CopyDocument /></el-icon>
             复制会议号
           </span>
         </div>
-        <i slot="reference" class="el-icon-info"></i>
+        <template v-slot:reference>
+          <el-icon><InfoFilled /></el-icon>
+        </template>
       </el-popover>
     </span>
     <Internals v-if="internalsVisible" :onClose="closeInternal" />
@@ -47,20 +51,17 @@
 </template>
 
 <script>
-import { Fragment } from "vue-fragment";
-
-import { Message } from "element-ui";
+import { ElMessage as Message } from "element-plus";
 import { RECORD_STATE_MAP } from "../../../utils/enum";
 import Internals from "../Internals/index.vue";
 import Timer from "../Timer/index.vue";
-import XYRTC from "../../../utils/xyRTC";
+import xyRTC from "../../../utils/xyRTC";
 import { useToolbarStore } from "../../../store/index";
 export default {
   name: "PromptInfo",
   props: ["conferenceInfo", "holdInfo"],
   data() {
     return {
-      xyRTC: null,
       level: 4,
       encrypt: "",
       internalsVisible: false,
@@ -73,19 +74,17 @@ export default {
   components: {
     Internals,
     Timer,
-    Fragment,
   },
   mounted() {
-    this.xyRTC = XYRTC.getInstance();
 
     // 网络状况
-    this.xyRTC.on("NetworkIndicatorLevel", this.levelHandler);
+    xyRTC.on("NetworkIndicatorLevel", this.levelHandler);
 
-    const { encrypt } = this.xyRTC.getStatistics() || {};
+    const { encrypt } = xyRTC.getStatistics() || {};
     this.encrypt = encrypt;
   },
-  beforeDestroy() {
-    this.xyRTC.off("NetworkIndicatorLevel", this.levelHandler);
+  beforeUnmount() {
+    xyRTC.off("NetworkIndicatorLevel", this.levelHandler);
   },
   methods: {
     levelHandler(e) {

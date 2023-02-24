@@ -2,7 +2,6 @@
     <span>{{ timer }}</span>
 </template>
 <script>
-import { Fragment } from "vue-fragment";
 export default {
   computed: {
     timer() {
@@ -16,13 +15,12 @@ export default {
     };
   },
   components: {
-    Fragment,
   },
   watch: {},
   mounted() {
     this.onCreateMeetingTimeCount();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.meetingTimeout && clearTimeout(this.meetingTimeout);
     this.meetingTimeout = null;
   },

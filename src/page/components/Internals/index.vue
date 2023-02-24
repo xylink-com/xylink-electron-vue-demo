@@ -42,11 +42,10 @@
         </thead>
       </table>
 
-      <Fragment v-if="isContent">
+      <template v-if="isContent">
         <br />
         <h4>内容共享</h4>
         <table class="table">
-          <Fragment>
             <thead>
               <tr class="table-title">
                 <th>通道名称</th>
@@ -98,14 +97,12 @@
                 <td>{{ item.actBw }}</td>
               </tr>
             </tbody>
-          </Fragment>
         </table>
-      </Fragment>
+      </template>
 
       <br />
       <h4>与会者</h4>
       <table class="table">
-        <Fragment>
           <thead>
             <tr class="table-title">
               <th>名称</th>
@@ -162,14 +159,12 @@
               <td>{{ item.actBw }}</td>
             </tr>
           </tbody>
-        </Fragment>
       </table>
     </div>
   </div>
 </template>
 <script>
-import { Fragment } from "vue-fragment";
-import XYRTC from "../../../utils/xyRTC";
+import xyRTC from "../../../utils/xyRTC";
 import { Base64 } from 'js-base64';
 export default {
   props: ["onClose"],
@@ -224,16 +219,15 @@ export default {
     };
   },
   components: {
-    Fragment,
+    // Fragment,
   },
   watch: {},
   mounted() {
-    const xyRTC = XYRTC.getInstance();
     this.timer = setInterval(() => {
       this.statistics = xyRTC.getStatistics();
     }, 500);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;

@@ -16,12 +16,14 @@
       <span v-text="content.roster.displayName" />
       正在共享
     </div>
+    <SignInStatus/>
   </div>
 </template>
 
 <script>
 import { RECORD_STATE_MAP } from '../../../utils/enum';
 import CloudRecordStatus from "../CloudRecordStatus/index.vue";
+import SignInStatus from "./signInPromp.vue";
 
 
 export default {
@@ -38,6 +40,7 @@ export default {
   ],
    components: {
     CloudRecordStatus,
+    SignInStatus
   },
   mounted(){
     console.log('this.content',this.content)
@@ -55,7 +58,7 @@ export default {
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .meeting-prompt {
   position: absolute;
   top: 10px;

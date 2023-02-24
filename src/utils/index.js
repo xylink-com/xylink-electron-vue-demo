@@ -50,3 +50,58 @@ export const throttle = function (fn, wait) {
     }
   };
 };
+
+export const debounce = function (fn, delay, atleast) {
+  let timer;
+  let previous;
+  return function (...args) {
+    const now = +new Date();
+    const context = this;
+
+    timer && clearTimeout(timer);
+    if (!previous) {
+      previous = now;
+    }
+
+    if (now - previous >= atleast) {
+      fn.apply(context, args);
+      previous = now;
+    } else {
+      timer = setTimeout(function () {
+        fn.apply(context, args);
+      }, delay);
+    }
+  };
+};
+
+
+/**
+ * 判断终端是否支持遥控摄像头
+ * 当前摄像头所支持的指令集, onVideoStreamChanged#SDKVideoStreamInfo.feccOri
+ * (feccOri & 1 << 1) != 0 : 支持水平方向上的转动 (左右)
+ * (feccOri & 1 << 2) != 0 : 支持垂直方向上的转动 (上下)
+ * (feccOri & 1 << 4) != 0 : 支持缩放
+ *
+ * @param {number | undefined} feccOri 终端指令
+ * @return {object} 是否支持水平、垂直、缩放、前三种全部支持
+ */
+export const farEndControlSupport = (feccOri) => {
+  if (typeof feccOri !== 'number') {
+    return {
+      supportHorizontal: false,
+      supportVertical: false,
+      supportZoom: false,
+      supportSome: false
+    }
+  }
+  const supportHorizontal = (feccOri & 1 << 1) != 0;
+  const supportVertical = (feccOri & 1 << 2) != 0;
+  const supportZoom = (feccOri & 1 << 4) != 0;
+  const supportSome = supportHorizontal || supportVertical || supportZoom;
+  return {
+    supportHorizontal,
+    supportVertical,
+    supportZoom,
+    supportSome
+  }
+}

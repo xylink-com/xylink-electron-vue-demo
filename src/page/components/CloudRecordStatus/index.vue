@@ -41,7 +41,7 @@ export default {
   mounted() {
     this.onCreateMeetingTimeCount();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.meetingTimeout && clearTimeout(this.meetingTimeout);
     this.meetingTimeout = null;
   },

@@ -53,17 +53,6 @@ const onCancel = (done) => {
   done();
 };
 
-// 用watchEffect，signInState变化也会触发
-// watch(eventType, (newVal) => {
-//   if (newVal === EventType.START || newVal === EventType.STOP) {
-//     console.log("watchEffect");
-//     signInState.$patch({
-//       modal: true,
-//       promp: false,
-//     });
-//   }
-// });
-
 watchEffect(() => {
   if (
     eventType.value === EventType.START ||
@@ -115,20 +104,12 @@ const onSubmitSignatureInfosResult = (e) => {
   });
 };
 
-// const onInteractiveToolInfo = (e) => {
-//   console.log("onInteractiveToolInfo", e);
-//   interactiveState.$patch(e);
-// };
-
 onMounted(() => {
-  // 互动工具回调
-  //   xyRTC.on("InteractiveToolInfo", onInteractiveToolInfo);
   // 签到结果
   xyRTC.on("SubmitSignatureInfosResult", onSubmitSignatureInfosResult);
 });
 
 onBeforeUnmount(() => {
-  //   xyRTC.removeListener("InteractiveToolInfo", onInteractiveToolInfo);
   xyRTC.removeListener(
     "SubmitSignatureInfosResult",
     onSubmitSignatureInfosResult

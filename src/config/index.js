@@ -12,12 +12,12 @@
  */
 
 
-// export const DEFAULT_PROXY = "sdkapi.xylink.com";
-export const DEFAULT_PROXY = "cloud.xylink.com";
+export const DEFAULT_PROXY = "sdkapi.xylink.com";
+// export const DEFAULT_PROXY = "cloud.xylink.com";
 
 export const ACCOUNT = {
   extId: '0142901e3d83e0a1e225ef92b8663fcaebda7242',
-  // clientId: 'PsdkO7Sn3ysuIZA9GiVv90D7',
-  // clientSecret: '1mIkLWUf2uHkUmpoY9YJoUFXdcLGJSeH',
+  clientId: 'PsdkO7Sn3ysuIZA9GiVv90D7',
+  clientSecret: '1mIkLWUf2uHkUmpoY9YJoUFXdcLGJSeH',
 };
 

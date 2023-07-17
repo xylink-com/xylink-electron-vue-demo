@@ -181,6 +181,7 @@ import { USER_INFO, RECORD_STATE_MAP } from "../utils/enum";
 import { DEFAULT_PROXY } from "../config";
 import { TEMPLATE } from "../utils/template";
 import { getScreenInfo, farEndControlSupport, debounce } from "../utils/index";
+import { SDK_ERROR_MAP, KICK_OUT_MAP } from "../utils/error";
 import { ElMessage as Message } from "element-plus";
 import cloneDeep from "clone-deep";
 import Video from "./components/Video/index.vue";
@@ -472,7 +473,7 @@ export default {
 
     // call status event
     xyRTC.on("CallState", (e) => {
-      const { state, reason } = e;
+      const { state, reason, error } = e;
 
       if (state === "Connected") {
         if (this.callState !== "meeting") {
@@ -485,7 +486,16 @@ export default {
           });
         }
       } else if (state === "Disconnected") {
-        message.info(reason);
+        if (error !== 'XYSDK:969001') {
+          message.info(SDK_ERROR_MAP[error] || reason);
+
+          // token过期退出登录
+          if (error === 'XYSDK:964104') {
+            xyRTC.logout();
+          }
+        } else {
+          message.info(reason);
+        }
         this.hangup();
       } else if (state === "Connecting" || state === "Disconnecting") {
         return;
@@ -503,18 +513,13 @@ export default {
 
         this.callState = "logined";
       } else if (e.state === "Logouted") {
-        if (e.error === 1013 || e.error === 1014 || e.error === 1031) {
-          message.info("用户名或密码错误");
-        } else if (e.error === 1030) {
-          message.info("密码验证超时");
-        } else {
-          Message({
-            type: "success",
-            message: "注销成功",
-          });
-        }
-
         this.callState = "externalLogin";
+
+        if (e.error === 'XYSDK:969001') {
+          return;
+        } else {
+          message.info(SDK_ERROR_MAP[e.error] || '服务异常');
+        }
       }
     });
 
@@ -533,15 +538,10 @@ export default {
 
     xyRTC.on("KickOut", (e) => {
       console.log("demo get kick out message: ", e);
-      const errorMap = {
-        4000: "多个重复长连接建立",
-        4001: "用户在另一台设备登录",
-        4003: "登录过期",
-      };
 
       xyRTC.logout();
 
-      message.info(`账号异常：${errorMap[e] || "未知异常，重新登录"}`);
+      message.info(`账号异常：${KICK_OUT_MAP[e] || "未知异常，重新登录"}`);
     });
 
     // screen size change event

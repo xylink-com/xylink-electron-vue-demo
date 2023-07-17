@@ -1,6 +1,6 @@
 {
   "name": "xy-electron-vue-demo",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "electron sdk vue",
   "license": "MIT",
@@ -18,11 +18,11 @@
   "dependencies": {
     "@electron/remote": "^2.0.9",
     "@element-plus/icons-vue": "^2.0.10",
-    "@xylink/xy-electron-sdk": "^1.0.2",
+    "@xylink/xy-electron-sdk": "^1.0.3",
     "clone-deep": "^4.0.1",
     "core-js": "^3.8.3",
     "dayjs": "^1.11.7",
-    "electron": "13.6.9",
+    "electron": "24",
     "element-plus": "^2.2.28",
     "js-base64": "^3.7.2",
     "pinia": "^2.0.21",

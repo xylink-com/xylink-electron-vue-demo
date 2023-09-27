@@ -168,6 +168,8 @@
         :conferenceInfo="conferenceInfo"
         :stopMeeting="hangup"
       />
+
+      <ContentSharingDialog />
     </div>
   </div>
 </template>
@@ -198,12 +200,14 @@ import {
   farEndControlStore,
   useInteractive,
   useSignIn,
+  useContentSharing,
 } from "../store/index";
 import { mapStores, mapWritableState } from "pinia";
 import FarEndControl from "./components/FarEndControl/index.vue";
 import Login from "./components/Login/index.vue";
 import SignIn from "./components/SignIn/index.vue";
 import LayoutSelect from "./components/LayoutSelect/index.vue";
+import ContentSharingDialog from './components/ContentSharing/index.vue';
 
 const store = new Store();
 
@@ -243,6 +247,7 @@ export default {
     Login,
     SignIn,
     LayoutSelect,
+    ContentSharingDialog,
   },
   data() {
     return {
@@ -437,7 +442,7 @@ export default {
       farEndShow: "show",
       farEndFeccOri: "feccOri",
     }),
-    ...mapStores(useInteractive, useSignIn),
+    ...mapStores(useInteractive, useSignIn, useContentSharing),
     showFarEnd() {
       return this.farEndShow && !!this.farEndCallUri;
     },
@@ -551,13 +556,41 @@ export default {
 
     // content status event
     xyRTC.on("ContentState", (e) => {
+      console.log("demo get content state message: ", e);
+      const lastShareContentStatus = this.shareContentStatus;
+      
+      // 0: IDEL；1：SENDING；2：RECEIVEING
+      if (e === 0 || e === 1 || e === 2) {
+        this.shareContentStatus = e;
+      }
+      // SENDING，正在发送
       if (e === 1) {
         message.info(`您正在分享Content内容`);
-      } else if (e === 0) {
+      } else if (e === 0 && lastShareContentStatus !== 0) {
         message.info(`已结束分享内容`);
+        this.contentSharingStore.$patch({
+          isPaused: false,
+          isManualPaused: false,
+          type: -1
+        });
+        // 防止远端顶掉共享导致没有停止捕获
+        this.stopShareContent();
       }
+    });
 
-      this.shareContentStatus = e;
+    xyRTC.on('AppWindowCaptureState', (e) => {
+      console.log('AppWindowCaptureState:', e);
+
+      if (e.isClosed) { // app 如果被关闭，则停止共享
+        xyRTC.stopSendContent();
+        message.info('由于共享应用已被关闭，屏幕共享已停止');
+      } else {
+        const { isManualPaused } = this.contentSharingStore;
+        // 如果手动暂停了，则不处理终端下发的暂停状态
+        if (!isManualPaused) {
+          this.contentSharingStore.isPaused = e.isPaused;
+        }
+      }
     });
 
     // 会控取消举手 回调
@@ -868,6 +901,10 @@ export default {
       this.interactiveStore.$reset();
       this.signInStore.$reset();
       xyRTC.endCall();
+      // 结束共享
+      if (this.shareContentStatus === 1) {
+        this.stopShareContent();
+      }
     },
     async switchLayout() {
       if (this.shareContentStatus === 1) {
@@ -903,18 +940,25 @@ export default {
 
       this.setForceFullScreen(this.forceFullScreenId ? "" : id);
     },
+    // 停止共享
     stopShareContent() {
+      this.contentSharingStore.$patch({
+        isPaused: false,
+        isManualPaused: false,
+      });
       xyRTC.stopSendContent();
     },
+    // 开始共享
     shareContent() {
       if (this.disableContent) {
         message.info("没有双流分享权限");
         return;
       }
-
-      xyRTC.startSendContent(true);
+      // 弹出共享窗口
+      this.contentSharingStore.$patch({
+        dialogVisible: true
+      });
     },
-
     // 麦克风操作
     async onAudioOperate() {
       try {

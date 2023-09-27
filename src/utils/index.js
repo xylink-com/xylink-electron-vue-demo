@@ -105,3 +105,51 @@ export const farEndControlSupport = (feccOri) => {
     supportSome
   }
 }
+
+
+/**
+ * argb图片转rgba
+ * 
+ * @param {ArrayBuffer} src argb array buffer
+ * @param {boolean} convertAlpha 是否转换 alpha 通道
+ * @returns {Uint8Array} 转换后的 rgba 数据
+ */
+export const argbToRgba = (src, convertAlpha = false) => {
+  const uint8Arr = new Uint8Array(src);
+  for (let i = 0; i < uint8Arr.byteLength; i += 4) {
+    const b = uint8Arr[i];
+    const g = uint8Arr[i + 1];
+    const r = uint8Arr[i + 2];
+    const a = uint8Arr[i + 3];
+    uint8Arr[i] = r;
+    uint8Arr[i + 1] = g;
+    uint8Arr[i + 2] = b;
+    uint8Arr[i + 3] = convertAlpha ? a || 255 : a;
+  }
+  return uint8Arr;
+}
+
+/**
+ * 判断图片数据是不是有问题的图片，
+ * alpha 通道是 0，alpha 通道是 255，rgb 都是 0
+ * 
+ * @param {ArrayBuffer} array argb or rgba array buffer
+ * @returns {boolean} true: 图片有问题；false：正常的图片
+*/
+export const isBlackImg = (array) => {
+  let isBlack = true;
+  const uint8Arr = array instanceof Uint8Array ? array : new Uint8Array(array);
+  for (let i = 0; i < uint8Arr.byteLength; i += 4) {
+    const c1 = uint8Arr[i];
+    const c2 = uint8Arr[i + 1];
+    const c3 = uint8Arr[i + 2];
+    const c4 = uint8Arr[i + 3];
+    const sum = c1 + c2 + c3 + c4;
+    const flag = sum === 0 || (sum === 255 && c4 == 255);
+  
+    if (!flag) {
+      isBlack = false;
+    }
+  }
+  return isBlack;
+};

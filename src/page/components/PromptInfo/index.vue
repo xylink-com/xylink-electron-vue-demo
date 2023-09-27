@@ -11,7 +11,18 @@
       主屏已锁定
       <div class="lock-btn" @click="setForceFullScreen">解锁</div>
     </div>
-    <div class="meeting-prompt-box" v-if="isLocalShareContent">本地共享中</div>
+    <!-- 共享状态 -->
+    <div class="meeting-prompt-box" v-if="isLocalShareContent">
+      {{ sharingState.isPaused ? '共享已暂停' : '本地共享中' }}
+      <div class="lock-btn" size="small" @click.stop="switchContentSharingState">
+        {{ sharingState.isPaused ? '恢复' : '暂停' }}
+      </div>
+    </div>
+
+    <div class="meeting-prompt-box" v-if="appSharingIsPaused && isLocalShareContent">
+      共享已暂停，请保持被共享应用在屏幕最上方
+    </div>
+
     <div class="meeting-prompt-box" v-if="content">
       <span v-text="content.roster.displayName" />
       正在共享
@@ -20,42 +31,64 @@
   </div>
 </template>
 
-<script>
-import { RECORD_STATE_MAP } from '../../../utils/enum';
+<script setup>
+import { storeToRefs } from 'pinia';
+import { defineProps, onMounted, computed, toRefs } from 'vue';
+import { useContentSharing } from "@/store";
+import { RECORD_STATE_MAP, SharingType } from '@/utils/enum';
 import CloudRecordStatus from "../CloudRecordStatus/index.vue";
 import SignInStatus from "./signInPromp.vue";
+import xyRTC from '@/utils/xyRTC';
 
+const props = defineProps({
+  recordPermission: Object,
+  isRecordPaused: Boolean,
+  isLocalShareContent: Boolean,
+  content: Object,
+  chirmanUri: String,
+  recordStatus: Number,
+  forceFullScreenId: String,
+  setForceFullScreen: Function
+});
+const {
+  content,
+  chirmanUri,
+  isRecordPaused,
+  setForceFullScreen,
+  forceFullScreenId,
+  isLocalShareContent,
+} = toRefs(props);
 
-export default {
-  name: "PromptInfo",
-  props: [
-    "recordPermission",
-    "isRecordPaused",
-    "isLocalShareContent",
-    "content",
-    "chirmanUri",
-    "recordStatus",
-    "forceFullScreenId",
-    "setForceFullScreen",
-  ],
-   components: {
-    CloudRecordStatus,
-    SignInStatus
-  },
-  mounted(){
-    console.log('this.content',this.content)
-  },
+const sharingState = useContentSharing();
+const { isPaused } = storeToRefs(sharingState);
 
-  computed: {
-    hideCloudRecordStatus(){
-      return !this.recordPermission.isStartRecord &&
-      RECORD_STATE_MAP.acting !== this.recordStatus
-    },
-    showTimer(){
-      return RECORD_STATE_MAP.acting === this.recordStatus
-    }
-  }
-};
+onMounted(() => {
+  console.log('content', content);
+});
+
+const hideCloudRecordStatus = computed(() => {
+  return !props.recordPermission.isStartRecord &&
+      RECORD_STATE_MAP.acting !== props.recordStatus
+});
+
+const appSharingIsPaused = computed(() => {
+  return sharingState.type === SharingType.APP && sharingState.isPaused;
+});
+
+const showTimer = computed(() => {
+  return RECORD_STATE_MAP.acting === props.recordStatus;
+});
+
+const switchContentSharingState = () => {
+  const prevPausedState = isPaused.value;
+
+  sharingState.$patch({
+    isPaused: !prevPausedState,
+    isManualPaused: !prevPausedState,
+  });
+  // 点击按钮之前是暂停共享的状态，就重新恢复共享，否则暂停共享
+  prevPausedState ? xyRTC.resumeContentCapture() : xyRTC.pauseContentCapture();
+}
 </script>
 
 <style lang="scss">

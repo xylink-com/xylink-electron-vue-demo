@@ -93,3 +93,18 @@ export const useSignIn = defineStore("signIn", {
     };
   },
 });
+
+/**
+ * 共享状态（暂停、开启、共享类型）
+ */
+export const useContentSharing = defineStore('contentSharing', {
+  state: () => {
+    return {
+      isPaused: false,
+      // -1: INVALID
+      type: -1,
+      dialogVisible: false,
+      isManualPaused: false
+    }
+  }
+});

@@ -9,10 +9,10 @@
  * 重要提示
  * 重要提示
  * 重要提示
- */
+*/
 
 
-export const DEFAULT_PROXY = "sdkapi.xylink.com";
+export const DEFAULT_PROXY = "cloud.xylink.com";
 
 export const ACCOUNT = {
   extId: '',

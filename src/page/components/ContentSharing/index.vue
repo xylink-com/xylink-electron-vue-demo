@@ -1,7 +1,6 @@
 <script setup>
 import { reactive, onBeforeUnmount, watchEffect } from "vue";
 import xyRTC from "@/utils/xyRTC";
-import { argbToRgba, isBlackImg } from "@/utils";
 import { SharingType } from "@/utils/enum";
 import { useContentSharing } from "@/store";
 import ThumbnailRenderer from "@/page/components/ThumbnailRenderer/index.vue";
@@ -43,10 +42,10 @@ const startContent = (content) => {
 
     if (type === SharingType.APP) {
         payload.contentInfo.viewId = info.hwnd;
-        xyRTC.startShareContent(payload);
+        xyRTC.startSendContent(payload);
     } else if (type === SharingType.SCREEN) {
         payload.contentInfo.source = info.monitorName;
-        xyRTC.startShareContent(payload);
+        xyRTC.startSendContent(payload);
     }
     sharingState.$patch({
         type,
@@ -58,7 +57,7 @@ const startContent = (content) => {
 const getThumbnailList = () => {
     const thumbnails = [];
     /** 获取屏幕缩略图 */
-    const monitorNameList = xyRTC.getMonitorInfoList();
+    const monitorNameList = xyRTC.getMonitorList();
 
     monitorNameList.forEach((monitorName, index) => {
         const monitor = thumbnailsMap.get(monitorName);
@@ -67,12 +66,10 @@ const getThumbnailList = () => {
             thumbnails.push(monitor);
         }
         else {
-            // 获取缩略图，创建新的缩略图数据
+            /** 获取缩略图，创建新的缩略图数据 */
             const monitorThumb = xyRTC.getMonitorThumbnail(monitorName);
-            const { hasData, buffer } = monitorThumb;
 
-            if (hasData) {
-                monitorThumb.buffer = argbToRgba(buffer, true);
+            if (monitorThumb.hasData) {
                 const info = {
                     info: monitorThumb,
                     key: monitorName,
@@ -86,7 +83,7 @@ const getThumbnailList = () => {
     });
 
     /** 获取 app 缩略图 */
-    const appInfoList = xyRTC.getAppInfoList();
+    const appInfoList = xyRTC.getAppList();
 
     for (let appInfo of appInfoList) {
         const { hwnd, appName } = appInfo;
@@ -96,19 +93,12 @@ const getThumbnailList = () => {
             thumbnails.push(appContentInfo);
         } else {
             const appData = { ...xyRTC.getAppThumbnail(hwnd), ...appInfo };
+
             // 有些应用可能获取的缩略图有问题，比如任务管理器，需要判断一下是是不是有问题的图片，
             // 如果有问题则使用 icon 代替
-            let appIcon = null;
+            !appData.hasData && Object.assign(appData, xyRTC.getAppIcon(hwnd));
 
-            if (isBlackImg(appData.buffer) || !appData.hasData) {
-                appIcon = xyRTC.getAppIcon(hwnd);
-                Object.assign(appData, appIcon);
-            }
-            const { buffer, hasData } = appData;
-
-            if (!hasData) continue; // 如果缩略图和 icon 都拿不到，则直接过滤掉
-
-            appData.buffer = argbToRgba(buffer, !appIcon);
+            if (!appData.hasData) continue; // 如果缩略图和 icon 都拿不到，则直接过滤掉
             const content = {
                 info: appData,
                 key: hwnd,

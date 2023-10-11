@@ -2,6 +2,10 @@
 import { reactive, onMounted, onBeforeUnmount } from "vue";
 import xyRTC from "@/utils/xyRTC";
 import './device.css'
+import { useCallStateStore } from "@/store/index";
+
+const callStateStore = useCallStateStore();
+
 const deviceList = reactive({
   camera: [],
   microphone: [],
@@ -20,6 +24,11 @@ const currentDeviceCallback = (currentDevice) => {
   Object.keys(currentDevice).forEach((key) => {
     selectDevice[key] = currentDevice[key];
   });
+
+   // 会外使用麦克风需要用户自己处理麦克风采集，设备更新需要重新捕获麦克风
+   if(currentDevice.microphone && callStateStore.callState !== 'meeting'){
+      xyRTC.startAudioCapture();
+    }
 };
 const deviceCallback = (list) => {
   console.log("deviceCallback deviceList: ", list);
@@ -43,11 +52,21 @@ onMounted(() => {
 
   xyRTC.on("Device", deviceCallback);
   xyRTC.on("CurrentDevice", currentDeviceCallback);
+  
+  // 会外使用麦克风需要用户自己处理麦克风采集
+  if(callStateStore.callState !== 'meeting'){
+    xyRTC.startAudioCapture();
+  }
 });
 
 onBeforeUnmount(() => {
   xyRTC.removeListener("Device", deviceCallback);
   xyRTC.removeListener("CurrentDevice", currentDeviceCallback);
+  
+  // 会外 离开此页面时，释放音频
+  if(callStateStore.callState !== 'meeting'){
+    xyRTC.stopAudioCapture();
+  }
 });
 
 const switchDevice = (type, devId) => {

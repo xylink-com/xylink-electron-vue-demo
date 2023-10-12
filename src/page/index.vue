@@ -758,6 +758,17 @@ export default {
       console.log("onInteractiveToolInfo", e);
       this.interactiveStore.$patch(e);
     });
+
+    xyRTC.on('HostMeetingUrl', (e) => {
+      console.log('HostMeetingUrl: ', e);
+      const { members } = e;
+      // 会控链接
+      const { meetingNumber = "" } = this.conferenceInfo;
+
+      if (members) {
+        ipcRenderer.send("meetingControlWin", { url: members, meetingNumber });
+      }
+    });
   },
   methods: {
     calcCustomVideoStreamLayout() {
@@ -1223,14 +1234,7 @@ export default {
       }
     },
     openMeetingControlWin() {
-      // 会控链接
-      const { members } = xyRTC.getConfMgmtUrl();
-
-      const { meetingNumber = "" } = this.conferenceInfo;
-
-      if (members) {
-        ipcRenderer.send("meetingControlWin", { url: members, meetingNumber });
-      }
+      xyRTC.getConfMgmtUrl();
     },
   },
   watch: {

@@ -91,4 +91,4 @@ export const SharingType = {
   APP: 1,
   /** 屏幕共享 */
   SCREEN: 0,
-}
+};

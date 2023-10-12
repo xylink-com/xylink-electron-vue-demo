@@ -3,7 +3,7 @@
     <div class="meeting-prompt-box" v-if="!hideCloudRecordStatus">
       <CloudRecordStatus
         :showTimer="showTimer"
-        :isRecordPaused="isRecordPaused"
+        :isRecordPaused="recordStatus === RecordStatus.PAUSE_BY_OTHERS"
       />
     </div>
     <div class="meeting-prompt-box" v-if="chirmanUri">主会场模式</div>
@@ -34,26 +34,23 @@
 <script setup>
 import { storeToRefs } from 'pinia';
 import { defineProps, onMounted, computed, toRefs } from 'vue';
-import { useContentSharing } from "@/store";
-import { RECORD_STATE_MAP, SharingType } from '@/utils/enum';
+import { useContentSharing, useCloudRecordInfo } from "@/store";
+import {  SharingType } from '@/utils/enum';
 import CloudRecordStatus from "../CloudRecordStatus/index.vue";
 import SignInStatus from "./signInPromp.vue";
 import xyRTC from '@/utils/xyRTC';
+import {RecordStatus} from '@xylink/xy-electron-sdk'
 
 const props = defineProps({
-  recordPermission: Object,
-  isRecordPaused: Boolean,
   isLocalShareContent: Boolean,
   content: Object,
   chirmanUri: String,
-  recordStatus: Number,
   forceFullScreenId: String,
   setForceFullScreen: Function
 });
 const {
   content,
   chirmanUri,
-  isRecordPaused,
   setForceFullScreen,
   forceFullScreenId,
   isLocalShareContent,
@@ -62,13 +59,15 @@ const {
 const sharingState = useContentSharing();
 const { isPaused } = storeToRefs(sharingState);
 
+const cloudRecordInfoState = useCloudRecordInfo();
+const { recordStatus, isSelfRecord } = storeToRefs(cloudRecordInfoState);
+
 onMounted(() => {
   console.log('content', content);
 });
 
 const hideCloudRecordStatus = computed(() => {
-  return !props.recordPermission.isStartRecord &&
-      RECORD_STATE_MAP.acting !== props.recordStatus
+  return [RecordStatus.IDLE, RecordStatus.IDLE_BY_OTHERS, RecordStatus.DISABLE].includes(recordStatus)
 });
 
 const appSharingIsPaused = computed(() => {
@@ -76,7 +75,7 @@ const appSharingIsPaused = computed(() => {
 });
 
 const showTimer = computed(() => {
-  return RECORD_STATE_MAP.acting === props.recordStatus;
+  return RecordStatus.ACTING === recordStatus ||  (RecordStatus.ACTING_BY_OTHERS === recordStatus && isSelfRecord);
 });
 
 const switchContentSharingState = () => {

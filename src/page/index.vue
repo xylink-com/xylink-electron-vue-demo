@@ -358,6 +358,7 @@ export default {
       };
     },
     disableRecord() {
+      console.log('disabled record', this.confCanRecord, this.recordStatus,this.isSelfRecord)
       // 会控禁用录制， 录制状态时disable, 别人正在处理录制中或者暂停状态，这三种情况禁止操作录制
       if (
         !this.confCanRecord ||
@@ -736,10 +737,8 @@ export default {
         isSelfRecord = false;
       }
 
-      this.cloudRecordInfoStore.$patch((prevState) => {
-        prevState.isSelfRecord = isSelfRecord ?? prevState.isSelfRecord;
-        prevState.recordStatus = e.recordState;
-      })
+      this.isSelfRecord = isSelfRecord ?? this.isSelfRecord;
+      this.recordStatus = e.recordState;
 
       if (e.recordState === RecordStatus.IDLE) {
         Message({
@@ -863,7 +862,8 @@ export default {
         content: "",
       };
       this.inOutReminders = [];
-      this.cloudRecordInfoStore.$reset()
+      this.isSelfRecord = false;
+      this.recordStatus = RecordStatus.IDLE;
       this.confCanRecord = true;
       this.farEndShow = false;
       this.interactiveStore.$reset();
@@ -1228,7 +1228,7 @@ export default {
       // 录制空闲时可以开启录制
       if ([RecordStatus.IDLE, RecordStatus.IDLE_BY_OTHERS].includes(this.recordStatus)) {
         xyRTC.startCloudRecord();
-      } else if ((this.isSelfRecord)) {
+      } else if (this.isSelfRecord) {
         // 本人录制中
         xyRTC.stopCloudRecord();
       }

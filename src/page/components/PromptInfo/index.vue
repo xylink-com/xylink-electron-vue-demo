@@ -67,7 +67,7 @@ onMounted(() => {
 });
 
 const hideCloudRecordStatus = computed(() => {
-  return [RecordStatus.IDLE, RecordStatus.IDLE_BY_OTHERS, RecordStatus.DISABLE].includes(recordStatus)
+  return [RecordStatus.IDLE, RecordStatus.IDLE_BY_OTHERS, RecordStatus.DISABLE].includes(recordStatus.value)
 });
 
 const appSharingIsPaused = computed(() => {
@@ -75,7 +75,7 @@ const appSharingIsPaused = computed(() => {
 });
 
 const showTimer = computed(() => {
-  return RecordStatus.ACTING === recordStatus ||  (RecordStatus.ACTING_BY_OTHERS === recordStatus && isSelfRecord);
+  return RecordStatus.ACTING === recordStatus.value ||  (RecordStatus.ACTING_BY_OTHERS === recordStatus.value && isSelfRecord.value);
 });
 
 const switchContentSharingState = () => {

@@ -1,8 +1,11 @@
 <script setup>
-import { reactive, onMounted, onBeforeUnmount } from "vue";
+import { reactive, onMounted, onBeforeUnmount, watchEffect, toRef, defineProps } from "vue";
 import xyRTC from "@/utils/xyRTC";
 import './device.css'
 import { useCallStateStore } from "@/store/index";
+
+const props = defineProps(['modalVisible']);
+const modalVisible = toRef(props, 'modalVisible');
 
 const callStateStore = useCallStateStore();
 
@@ -25,10 +28,10 @@ const currentDeviceCallback = (currentDevice) => {
     selectDevice[key] = currentDevice[key];
   });
 
-   // 会外使用麦克风需要用户自己处理麦克风采集，设备更新需要重新捕获麦克风
-   if(currentDevice.microphone && callStateStore.callState !== 'meeting'){
-      xyRTC.startAudioCapture();
-    }
+  // 会外使用麦克风需要用户自己处理麦克风采集，设备更新需要重新捕获麦克风
+  if (currentDevice.microphone && callStateStore.callState !== 'meeting') {
+    xyRTC.startAudioCapture();
+  }
 };
 const deviceCallback = (list) => {
   console.log("deviceCallback deviceList: ", list);
@@ -52,21 +55,24 @@ onMounted(() => {
 
   xyRTC.on("Device", deviceCallback);
   xyRTC.on("CurrentDevice", currentDeviceCallback);
-  
-  // 会外使用麦克风需要用户自己处理麦克风采集
-  if(callStateStore.callState !== 'meeting'){
-    xyRTC.startAudioCapture();
-  }
 });
+
+watchEffect(() => {
+  console.log('modalVisible.value', modalVisible.value)
+  console.log('modalVisible', modalVisible)
+  // 会外使用麦克风需要用户自己处理麦克风采集
+  if (callStateStore.callState !== 'meeting') {
+    if (modalVisible.value) {
+      xyRTC.startAudioCapture();
+    } else {
+      xyRTC.stopAudioCapture();
+    }
+  }
+})
 
 onBeforeUnmount(() => {
   xyRTC.removeListener("Device", deviceCallback);
   xyRTC.removeListener("CurrentDevice", currentDeviceCallback);
-  
-  // 会外 离开此页面时，释放音频
-  if(callStateStore.callState !== 'meeting'){
-    xyRTC.stopAudioCapture();
-  }
 });
 
 const switchDevice = (type, devId) => {
@@ -80,17 +86,8 @@ const switchDevice = (type, devId) => {
       <span>摄像头</span>
     </el-col>
     <el-col :span="20">
-      <el-select
-        :style="{ width: '300px' }"
-        v-model="selectDevice.camera"
-        @change="(val)=>switchDevice('camera',val)"
-      >
-        <el-option
-          v-for="item in deviceList.camera"
-          :key="item.devId"
-          :value="item.devId"
-          :label="item.devName"
-        />
+      <el-select :style="{ width: '300px' }" v-model="selectDevice.camera" @change="(val) => switchDevice('camera', val)">
+        <el-option v-for="item in deviceList.camera" :key="item.devId" :value="item.devId" :label="item.devName" />
       </el-select>
     </el-col>
   </el-row>
@@ -100,17 +97,9 @@ const switchDevice = (type, devId) => {
       <span>麦克风</span>
     </el-col>
     <el-col :span="20">
-      <el-select
-        :style="{ width: '300px' }"
-        v-model="selectDevice.microphone"
-        @change="(val)=>switchDevice('microphone',val)"
-      >
-        <el-option
-          v-for="item in deviceList.microphone"
-          :key="item.devId"
-          :value="item.devId"
-          :label="item.devName"
-        />
+      <el-select :style="{ width: '300px' }" v-model="selectDevice.microphone"
+        @change="(val) => switchDevice('microphone', val)">
+        <el-option v-for="item in deviceList.microphone" :key="item.devId" :value="item.devId" :label="item.devName" />
       </el-select>
     </el-col>
   </el-row>
@@ -120,17 +109,8 @@ const switchDevice = (type, devId) => {
       <span>扬声器</span>
     </el-col>
     <el-col :span="20">
-      <el-select
-        :style="{ width: '300px' }"
-        v-model="selectDevice.speaker"
-        @change="(val)=>switchDevice('speaker',val)"
-      >
-        <el-option
-          v-for="item in deviceList.speaker"
-          :key="item.devId"
-          :value="item.devId"
-          :label="item.devName"
-        />
+      <el-select :style="{ width: '300px' }" v-model="selectDevice.speaker" @change="(val) => switchDevice('speaker', val)">
+        <el-option v-for="item in deviceList.speaker" :key="item.devId" :value="item.devId" :label="item.devName" />
       </el-select>
     </el-col>
   </el-row>

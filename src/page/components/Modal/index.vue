@@ -22,7 +22,7 @@
         <el-button link @click="handleOk"> 设置 </el-button>
       </el-col>
     </el-row>
-    <Device/>
+    <Device :modelVisible="visible"/>
   </el-dialog>
 </template>
 <script>

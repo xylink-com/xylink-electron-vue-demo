@@ -2,6 +2,7 @@
   <div id="app">
     <div class="container">
       <SettingModal
+        :modalVisible="visible"
         :model-value="visible"
         :value="proxy"
         @cancel="toggleProxyModal"

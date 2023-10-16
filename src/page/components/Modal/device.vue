@@ -4,8 +4,8 @@ import xyRTC from "@/utils/xyRTC";
 import './device.css'
 import { useCallStateStore } from "@/store/index";
 
-const props = defineProps(['modalVisible']);
-const modalVisible = toRef(props, 'modalVisible');
+const props = defineProps(['dialogVisible']);
+const dialogVisible = toRef(props, 'dialogVisible');
 
 const callStateStore = useCallStateStore();
 
@@ -58,11 +58,9 @@ onMounted(() => {
 });
 
 watchEffect(() => {
-  console.log('modalVisible.value', modalVisible.value)
-  console.log('modalVisible', modalVisible)
   // 会外使用麦克风需要用户自己处理麦克风采集
   if (callStateStore.callState !== 'meeting') {
-    if (modalVisible.value) {
+    if (dialogVisible.value) {
       xyRTC.startAudioCapture();
     } else {
       xyRTC.stopAudioCapture();

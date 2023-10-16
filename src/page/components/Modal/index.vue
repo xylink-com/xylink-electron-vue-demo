@@ -22,7 +22,7 @@
         <el-button link @click="handleOk"> 设置 </el-button>
       </el-col>
     </el-row>
-    <Device :modelVisible="visible"/>
+    <Device :dialogVisible="modalVisible"/>
   </el-dialog>
 </template>
 <script>
@@ -33,7 +33,7 @@ const DEFAULT_DEVICE = {
   speaker: "",
 };
 export default {
-  props: ["visible", "value"],
+  props: ["visible", "value", "modalVisible"],
   data() {
     return {
       proxy: this.value,

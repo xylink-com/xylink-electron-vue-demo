@@ -42,7 +42,8 @@ const callState = computed(() => {
 });
 
 onMounted(() => {
-  versionRef.value = xyRTC.getVersion();
+  const { info } = xyRTC.getVersion();
+  versionRef.value = info;
 });
 
 const toggleProxyModal = () => {

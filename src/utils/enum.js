@@ -82,3 +82,13 @@ export const LAYOUT_MODEL_MAP = {
     ],
   ],
 };
+
+/**
+ * 共享类型
+ */
+export const SharingType = {
+  /** app */
+  APP: 1,
+  /** 屏幕共享 */
+  SCREEN: 0,
+};

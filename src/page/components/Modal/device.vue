@@ -1,7 +1,14 @@
 <script setup>
-import { reactive, onMounted, onBeforeUnmount } from "vue";
+import { reactive, onMounted, onBeforeUnmount, watchEffect, toRef, defineProps } from "vue";
 import xyRTC from "@/utils/xyRTC";
 import './device.css'
+import { useCallStateStore } from "@/store/index";
+
+const props = defineProps(['dialogVisible']);
+const dialogVisible = toRef(props, 'dialogVisible');
+
+const callStateStore = useCallStateStore();
+
 const deviceList = reactive({
   camera: [],
   microphone: [],
@@ -20,6 +27,11 @@ const currentDeviceCallback = (currentDevice) => {
   Object.keys(currentDevice).forEach((key) => {
     selectDevice[key] = currentDevice[key];
   });
+
+  // 会外使用麦克风需要用户自己处理麦克风采集，设备更新需要重新捕获麦克风
+  if (currentDevice.microphone && callStateStore.callState !== 'meeting') {
+    xyRTC.startAudioCapture();
+  }
 };
 const deviceCallback = (list) => {
   console.log("deviceCallback deviceList: ", list);
@@ -45,6 +57,17 @@ onMounted(() => {
   xyRTC.on("CurrentDevice", currentDeviceCallback);
 });
 
+watchEffect(() => {
+  // 会外使用麦克风需要用户自己处理麦克风采集
+  if (callStateStore.callState !== 'meeting') {
+    if (dialogVisible.value) {
+      xyRTC.startAudioCapture();
+    } else {
+      xyRTC.stopAudioCapture();
+    }
+  }
+})
+
 onBeforeUnmount(() => {
   xyRTC.removeListener("Device", deviceCallback);
   xyRTC.removeListener("CurrentDevice", currentDeviceCallback);
@@ -61,17 +84,8 @@ const switchDevice = (type, devId) => {
       <span>摄像头</span>
     </el-col>
     <el-col :span="20">
-      <el-select
-        :style="{ width: '300px' }"
-        v-model="selectDevice.camera"
-        @change="(val)=>switchDevice('camera',val)"
-      >
-        <el-option
-          v-for="item in deviceList.camera"
-          :key="item.devId"
-          :value="item.devId"
-          :label="item.devName"
-        />
+      <el-select :style="{ width: '300px' }" v-model="selectDevice.camera" @change="(val) => switchDevice('camera', val)">
+        <el-option v-for="item in deviceList.camera" :key="item.devId" :value="item.devId" :label="item.devName" />
       </el-select>
     </el-col>
   </el-row>
@@ -81,17 +95,9 @@ const switchDevice = (type, devId) => {
       <span>麦克风</span>
     </el-col>
     <el-col :span="20">
-      <el-select
-        :style="{ width: '300px' }"
-        v-model="selectDevice.microphone"
-        @change="(val)=>switchDevice('microphone',val)"
-      >
-        <el-option
-          v-for="item in deviceList.microphone"
-          :key="item.devId"
-          :value="item.devId"
-          :label="item.devName"
-        />
+      <el-select :style="{ width: '300px' }" v-model="selectDevice.microphone"
+        @change="(val) => switchDevice('microphone', val)">
+        <el-option v-for="item in deviceList.microphone" :key="item.devId" :value="item.devId" :label="item.devName" />
       </el-select>
     </el-col>
   </el-row>
@@ -101,17 +107,8 @@ const switchDevice = (type, devId) => {
       <span>扬声器</span>
     </el-col>
     <el-col :span="20">
-      <el-select
-        :style="{ width: '300px' }"
-        v-model="selectDevice.speaker"
-        @change="(val)=>switchDevice('speaker',val)"
-      >
-        <el-option
-          v-for="item in deviceList.speaker"
-          :key="item.devId"
-          :value="item.devId"
-          :label="item.devName"
-        />
+      <el-select :style="{ width: '300px' }" v-model="selectDevice.speaker" @change="(val) => switchDevice('speaker', val)">
+        <el-option v-for="item in deviceList.speaker" :key="item.devId" :value="item.devId" :label="item.devName" />
       </el-select>
     </el-col>
   </el-row>

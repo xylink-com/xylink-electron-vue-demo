@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { EventType, ProcessType } from "@xylink/xy-electron-sdk";
+import { EventType, ProcessType, RecordStatus } from "@xylink/xy-electron-sdk";
 
 export const useToolbarStore = defineStore("toolbar", {
   state: () => {
@@ -92,4 +92,31 @@ export const useSignIn = defineStore("signIn", {
       isSuccess: false,
     };
   },
+});
+
+/**
+ * 共享状态（暂停、开启、共享类型）
+ */
+export const useContentSharing = defineStore('contentSharing', {
+  state: () => {
+    return {
+      isPaused: false,
+      // -1: INVALID
+      type: -1,
+      dialogVisible: false,
+      isManualPaused: false
+    }
+  }
+});
+
+/**
+ * 录制状态
+ */
+export const useCloudRecordInfo = defineStore('cloudRecordInfo',{
+  state: () => {
+    return {
+      recordStatus: RecordStatus.IDLE,
+      isSelfRecord: false
+    }
+  }
 });

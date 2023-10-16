@@ -26,6 +26,9 @@ export const getAssetPath = (...paths) => {
 
 const icon = getAssetPath("logo512.png");
 
+const width = 800;
+const height = 600;
+
 // 必须提前定义好，存储视频流数据
 global.sharedObject = {
   videoFrames: {},
@@ -88,8 +91,12 @@ function createWindow() {
   );
 
   win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width,
+    height,
+    minWidth: width,
+    minHeight: height,
+    center: true,
+    resizable: true,
     webPreferences: {
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
       contextIsolation: false,

@@ -2,6 +2,7 @@
   <div id="app">
     <div class="container">
       <SettingModal
+        :modalVisible="visible"
         :model-value="visible"
         :value="proxy"
         @cancel="toggleProxyModal"
@@ -37,9 +38,6 @@
       <div v-if="callState === 'meeting' && !holdInfo.isOnhold">
         <div class="meeting-content">
           <PromptInfo
-            :recordPermission="recordPermission"
-            :isRecordPaused="isRecordPaused"
-            :recordStatus="recordStatus"
             :forceFullScreenId="forceFullScreenId"
             :setForceFullScreen="setForceFullScreen"
             :isLocalShareContent="shareContentStatus === 1"
@@ -168,6 +166,8 @@
         :conferenceInfo="conferenceInfo"
         :stopMeeting="hangup"
       />
+
+      <ContentSharingDialog />
     </div>
   </div>
 </template>
@@ -198,12 +198,16 @@ import {
   farEndControlStore,
   useInteractive,
   useSignIn,
+  useContentSharing,
+  useCloudRecordInfo
 } from "../store/index";
 import { mapStores, mapWritableState } from "pinia";
 import FarEndControl from "./components/FarEndControl/index.vue";
 import Login from "./components/Login/index.vue";
 import SignIn from "./components/SignIn/index.vue";
 import LayoutSelect from "./components/LayoutSelect/index.vue";
+import ContentSharingDialog from './components/ContentSharing/index.vue';
+import { RecordStatus } from '@xylink/xy-electron-sdk';
 
 const store = new Store();
 
@@ -243,6 +247,7 @@ export default {
     Login,
     SignIn,
     LayoutSelect,
+    ContentSharingDialog,
   },
   data() {
     return {
@@ -283,14 +288,7 @@ export default {
       subTitle: { action: "cancel", content: "" }, // 字幕
       inOutReminders: [], // 出入会通知
       callMode: "AudioVideo",
-      recordStatus: RECORD_STATE_MAP.idel, // 本地录制状态
-      isRecordPaused: false, // 其它端是否录制暂停中
-      recordPermission: {
-        // 录制权限相关
-        isStartRecord: false, // 是否已经开始录制
-        canRecord: true, // 录制开关
-        confCanRecord: true, // 会控中开启关闭录制权限
-      },
+      confCanRecord: false,
       unmuteCamera: false,
       unmuteMic: false,
     };
@@ -361,35 +359,37 @@ export default {
       };
     },
     disableRecord() {
-      const { isStartRecord, canRecord, confCanRecord } = this.recordPermission;
-
+      console.log('disabled record', this.confCanRecord, this.recordStatus,this.isSelfRecord)
+      // 会控禁用录制， 录制状态时disable, 别人正在处理录制中或者暂停状态，这三种情况禁止操作录制
       if (
-        (isStartRecord && this.recordStatus !== RECORD_STATE_MAP.acting) ||
-        !canRecord ||
-        !confCanRecord
-      ) {
-        return true;
-      }
-
-      if (
-        ![RECORD_STATE_MAP.idel, RECORD_STATE_MAP.acting].includes(
+        !this.confCanRecord ||
+        this.recordStatus === RecordStatus.DISABLE ||
+        ([RecordStatus.ACTING_BY_OTHERS, RecordStatus.PAUSE_BY_OTHERS].includes(
           this.recordStatus
-        )
+        ) &&
+          !this.isSelfRecord)
       ) {
         return true;
       }
 
       return false;
     },
+    isLocalRecording() {
+      // 本人正在录制或暂停中
+      return (this.recordStatus === RecordStatus.ACTING ||
+        RecordStatus.ACTING_BY_OTHERS === this.recordStatus ||
+        this.recordStatus === RecordStatus.PAUSE_BY_OTHERS) &&
+        this.isSelfRecord;
+    },
     recordStyle() {
       return `button ${
-        this.recordStatus === RECORD_STATE_MAP.acting
+        this.isLocalRecording
           ? "pause_record"
           : "record"
       } ${this.disableRecord ? "disabled-button" : ""}`;
     },
     recordText() {
-      return this.recordStatus === RECORD_STATE_MAP.acting
+      return this.isLocalRecording
         ? "停止录制"
         : "开始录制";
     },
@@ -432,12 +432,13 @@ export default {
       );
     },
     ...mapWritableState(useCallStateStore, ["callState"]),
+    ...mapWritableState(useCloudRecordInfo, ['isSelfRecord', 'recordStatus']),
     ...mapWritableState(farEndControlStore, {
       farEndCallUri: "callUri",
       farEndShow: "show",
       farEndFeccOri: "feccOri",
     }),
-    ...mapStores(useInteractive, useSignIn),
+    ...mapStores(useInteractive, useSignIn, useContentSharing),
     showFarEnd() {
       return this.farEndShow && !!this.farEndCallUri;
     },
@@ -551,13 +552,41 @@ export default {
 
     // content status event
     xyRTC.on("ContentState", (e) => {
+      console.log("demo get content state message: ", e);
+      const lastShareContentStatus = this.shareContentStatus;
+      
+      // 0: IDEL；1：SENDING；2：RECEIVEING
+      if (e === 0 || e === 1 || e === 2) {
+        this.shareContentStatus = e;
+      }
+      // SENDING，正在发送
       if (e === 1) {
         message.info(`您正在分享Content内容`);
-      } else if (e === 0) {
+      } else if (e === 0 && lastShareContentStatus !== 0) {
         message.info(`已结束分享内容`);
+        this.contentSharingStore.$patch({
+          isPaused: false,
+          isManualPaused: false,
+          type: -1
+        });
+        // 防止远端顶掉共享导致没有停止捕获
+        this.stopShareContent();
       }
+    });
 
-      this.shareContentStatus = e;
+    xyRTC.on('AppWindowCaptureState', (e) => {
+      console.log('AppWindowCaptureState:', e);
+
+      if (e.isClosed) { // app 如果被关闭，则停止共享
+        xyRTC.stopSendContent();
+        message.info('由于共享应用已被关闭，屏幕共享已停止');
+      } else {
+        const { isManualPaused } = this.contentSharingStore;
+        // 如果手动暂停了，则不处理终端下发的暂停状态
+        if (!isManualPaused) {
+          this.contentSharingStore.isPaused = e.isPaused;
+        }
+      }
     });
 
     // 会控取消举手 回调
@@ -619,11 +648,7 @@ export default {
         message.info(info);
       }
 
-      // 会控控制录制权限
-      this.recordPermission = {
-        ...this.recordPermission,
-        confCanRecord: !disableRecord,
-      };
+      this.confCanRecord = !disableRecord;
 
       this.disableContent = disableContent;
 
@@ -703,49 +728,20 @@ export default {
       }
     });
 
-    // 远端上报开启或关闭云端录制通知
-    xyRTC.on("RecordStatusNotification", (e) => {
-      this.recordPermission = {
-        ...this.recordPermission,
-        isStartRecord: e.isStart,
-      };
-
-      if (e.status) {
-        // 录制是否暂停 RECORDING_STATE_ACTING/RECORDING_STATE_PAUSED
-        this.isRecordPaused = e.status === "RECORDING_STATE_PAUSED";
-      }
-    });
-
     // 本地开始录制状态改变
     xyRTC.on("RecordingStateChanged", (e) => {
-      // 本地开启关闭录制后，RecordStatusNotification没有最后一次上报，因此需要手动处理
-      // RecordingStateChanged触发，远端必定没有开始录制
-      this.recordPermission = {
-        ...this.recordPermission,
-        isStartRecord: false,
-      };
-
-      // 本地开启关闭录制后，RecordStatusNotification没有最后一次上报，因此需要手动处理
-      // RecordingStateChanged触发，远端肯定没有录制暂停
-      this.isRecordPaused = false;
-      // 无权限
-      if (e.reason === "XYSDK:963902") {
-        this.recordPermission = {
-          ...this.recordPermission,
-          canRecord: false,
-        };
-
-        return;
+      // 录制过程中，由于本人和会控都有可能操作，所以需要自己区分是否是本人在录制
+      let isSelfRecord;
+      if (e.recordState === RecordStatus.ACTING) {
+        isSelfRecord = true;
+      } else if (e.recordState === RecordStatus.IDLE || e.recordState === RecordStatus.IDLE_BY_OTHERS) {
+        isSelfRecord = false;
       }
 
+      this.isSelfRecord = isSelfRecord ?? this.isSelfRecord;
       this.recordStatus = e.recordState;
 
-      if (e.reason !== "STATE:200") {
-        message.info(e.message);
-        return;
-      }
-
-      if (e.recordState === RECORD_STATE_MAP.idel) {
+      if (e.recordState === RecordStatus.IDLE) {
         Message({
           type: "success",
           message: "云端录制完成，录制视频已保存到云会议室管理员的文件夹中",
@@ -761,6 +757,17 @@ export default {
     xyRTC.on("InteractiveToolInfo", (e) => {
       console.log("onInteractiveToolInfo", e);
       this.interactiveStore.$patch(e);
+    });
+
+    xyRTC.on('HostMeetingUrl', (e) => {
+      console.log('HostMeetingUrl: ', e);
+      const { members } = e;
+      // 会控链接
+      const { meetingNumber = "" } = this.conferenceInfo;
+
+      if (members) {
+        ipcRenderer.send("meetingControlWin", { url: members, meetingNumber });
+      }
     });
   },
   methods: {
@@ -856,18 +863,17 @@ export default {
         content: "",
       };
       this.inOutReminders = [];
-
-      this.isRecordPaused = false;
-      this.recordStatus = RECORD_STATE_MAP.idel;
-      this.recordPermission = {
-        isStartRecord: false,
-        canRecord: true,
-        confCanRecord: true,
-      };
+      this.isSelfRecord = false;
+      this.recordStatus = RecordStatus.IDLE;
+      this.confCanRecord = true;
       this.farEndShow = false;
       this.interactiveStore.$reset();
       this.signInStore.$reset();
       xyRTC.endCall();
+      // 结束共享
+      if (this.shareContentStatus === 1) {
+        this.stopShareContent();
+      }
     },
     async switchLayout() {
       if (this.shareContentStatus === 1) {
@@ -903,18 +909,25 @@ export default {
 
       this.setForceFullScreen(this.forceFullScreenId ? "" : id);
     },
+    // 停止共享
     stopShareContent() {
+      this.contentSharingStore.$patch({
+        isPaused: false,
+        isManualPaused: false,
+      });
       xyRTC.stopSendContent();
     },
+    // 开始共享
     shareContent() {
       if (this.disableContent) {
         message.info("没有双流分享权限");
         return;
       }
-
-      xyRTC.startSendContent(true);
+      // 弹出共享窗口
+      this.contentSharingStore.$patch({
+        dialogVisible: true
+      });
     },
-
     // 麦克风操作
     async onAudioOperate() {
       try {
@@ -1213,21 +1226,16 @@ export default {
         return;
       }
 
-      if (this.recordStatus === RECORD_STATE_MAP.idel) {
+      // 录制空闲时可以开启录制
+      if ([RecordStatus.IDLE, RecordStatus.IDLE_BY_OTHERS].includes(this.recordStatus)) {
         xyRTC.startCloudRecord();
-      } else if (this.recordStatus === RECORD_STATE_MAP.acting) {
+      } else if (this.isSelfRecord) {
+        // 本人录制中
         xyRTC.stopCloudRecord();
       }
     },
     openMeetingControlWin() {
-      // 会控链接
-      const { members } = xyRTC.getConfMgmtUrl();
-
-      const { meetingNumber = "" } = this.conferenceInfo;
-
-      if (members) {
-        ipcRenderer.send("meetingControlWin", { url: members, meetingNumber });
-      }
+      xyRTC.getConfMgmtUrl();
     },
   },
   watch: {

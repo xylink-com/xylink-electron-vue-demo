@@ -12,10 +12,10 @@
 */
 
 
-export const DEFAULT_PROXY = "precloud.xylink.com";
+export const DEFAULT_PROXY = "sdkapi.xylink.com";
 
 export const ACCOUNT = {
-  extId: 'f5f885e0f735380f2b2c79450469cb32ca9a213c',
+  extId: '',
   clientId: '',
   clientSecret: '',
 };

@@ -25,7 +25,7 @@
           <div class="stop" @click="hangup">
             <img src="../style/img/end-call.png" alt="end-call" />
           </div>
-          <audio autoPlay loop src="../style/ring.ogg"></audio>
+          <audio autoPlay loop :src="ring"></audio>
         </div>
       </div>
 
@@ -208,6 +208,7 @@ import SignIn from "./components/SignIn/index.vue";
 import LayoutSelect from "./components/LayoutSelect/index.vue";
 import ContentSharingDialog from './components/ContentSharing/index.vue';
 import { RecordStatus } from '@xylink/xy-electron-sdk';
+import ring from "../style/ring.ogg";
 
 const store = new Store();
 
@@ -259,6 +260,7 @@ export default {
       forceFullScreenId: "",
       disableContent: false,
       chirmanUri: "",
+      ring,
       screenInfo: {
         layoutWidth: 0,
         layoutHeight: 0,

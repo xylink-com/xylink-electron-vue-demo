@@ -2281,10 +2281,10 @@
   resolved "https://registry.npmmirror.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@xylink/xy-electron-sdk@^3.10.0":
-  version "3.10.0"
-  resolved "https://registry.npmjs.org/@xylink/xy-electron-sdk/-/xy-electron-sdk-3.10.0.tgz#fcc38ee1e4a7073914ca26272b014ad4080f5858"
-  integrity sha512-vmE8xZuqZsgrXSRmmChYXfM3mQp/K0omB5hwF6bZZKoPasLNP4LzBBsbuURtMTw0rfmam84n+YXvwkIWq2zSdQ==
+"@xylink/xy-electron-sdk@^3.10.1":
+  version "3.10.1"
+  resolved "https://registry.npmmirror.com/@xylink/xy-electron-sdk/-/xy-electron-sdk-3.10.1.tgz#54e0c9d4c48dc68b0e911a18c48bb3210024d353"
+  integrity sha512-O+AiKaD87E1oA0S4r8DQhZbs475JIpPJoKANu4RizC9cb+BrLLXDNS1NPEbnV+jfvilXEg/XQOb11O8YDMFe0A==
   dependencies:
     dayjs "^1.11.6"
     download "^8.0.0"
@@ -4542,7 +4542,7 @@ electron-to-chromium@^1.4.284:
   resolved "https://registry.npmmirror.com/electron-to-chromium/-/electron-to-chromium-1.4.284.tgz#61046d1e4cab3a25238f6bf7413795270f125592"
   integrity sha512-M8WEXFuKXMYMVr45fo8mq0wUrrJHheiKZf6BArTKk9ZBYCKJEOU5H8cdWgDT+qCVZf7Na4lVUaZsA+h6uA9+PA==
 
-electron@24:
+electron@24.8.3:
   version "24.8.3"
   resolved "https://registry.npmmirror.com/electron/-/electron-24.8.3.tgz#ea842167eaf0323961ff3bcce7237bdaf4f1317d"
   integrity sha512-6YTsEOIMIQNnOz0Fj5gAWtwCuDd66iYKkuRJGyc80jKKYI49jBeH+R7ZZry9uiVu4T4bZgBN2FAN24XfCioQZA==

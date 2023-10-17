@@ -1,6 +1,6 @@
 {
   "name": "xy-electron-vue-demo",
-  "version": "3.10.0",
+  "version": "3.10.1",
   "private": true,
   "description": "electron sdk vue",
   "license": "MIT",

@@ -7,7 +7,7 @@
  * Last modified  : 2022-06-02 15:15:01
  */
 import { ACCOUNT } from "../config";
-import { TemplateModel } from "@xylink/xy-electron-sdk";
+import { TemplateModel, VideoBeautyStyle, VideoFilterStyle } from "@xylink/xy-electron-sdk";
 
 export const USER_INFO = {
   phone: "+86-",
@@ -92,3 +92,66 @@ export const SharingType = {
   /** 屏幕共享 */
   SCREEN: 0,
 };
+
+/**
+ * 设置弹窗中的菜单
+ */
+export const SettingMenu = {
+  /** 常规设置 */
+  COMMON: 1,
+  /** 虚拟背景和美颜 */
+  VIDEO_EFFECT: 2,
+};
+
+/**
+ * 美颜、滤镜、虚拟背景 tab key
+ */
+export const VideoEffectTabKey = {
+  VIRTUAL_BG: 'virtual-bg',
+  FILTER: 'filter',
+  BEAUTY: 'beauty',
+};
+
+/**
+ * 虚拟背景类型，自定义和预置
+ */
+export const IVirtualBgType = {
+  PRESET: 'preset',
+  CUSTOM: 'custom',
+};
+
+
+/**
+ * 虚拟背景配置
+ * 
+ * @param {string} VIRTUALIZATION - 背景虚化
+ * @param {number} MAX_IMG_SIZE - 图片最大值，10MB
+ * @param {string} ALLOW_MIME - 允许上传的图片类型
+ * @param {number} MAX_CUSTOM_NUM - 最大自定义图片数量
+ */
+export const VIRTUAL_BG = {
+  VIRTUALIZATION: 'VIRTUALIZATION',
+  MAX_IMG_SIZE: 10,
+  ALLOW_MIME: 'image/jpeg, image/png',
+  MAX_CUSTOM_NUM: 10,
+};
+
+/** 保存自定义背景图的目录名，在 userData 目录下会新建这个目录 */
+export const VIRTUAL_BG_DIR = 'virtual-bg';
+
+/**
+ * 虚拟背景/美颜/滤镜 默认配置
+ */
+export const DEFAULT_VIDEO_EFFECT_CONFIG = {
+  selected: {
+    beauty: { style: VideoBeautyStyle.NONE },
+    filter: { style: VideoFilterStyle.NONE },
+  },
+
+  beautyMap: {},
+  filterMap: {},
+
+  virtualBg: {
+    list: []
+  },
+}

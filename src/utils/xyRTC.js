@@ -18,6 +18,11 @@ if (process.env.NODE_ENV === "development") {
 class RTC {
   static instance = null;
 
+  /**
+   * 
+   * @param {object} config XYRTC 配置
+   * @returns {XYRTC}
+   */
   static getInstance(config) {
     if (!RTC.instance) {
       if(!config){

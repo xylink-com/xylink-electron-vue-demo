@@ -3,84 +3,52 @@
     title="设置"
     class="xy__setting-dialog"
     :model-value="visible"
+    :destroy-on-close="true"
+    :close-on-click-modal="false"
     :before-close="handleCancel"
   >
-    <el-row class="mb15">
-      <el-col :span="4" class="center">
-        <span>代理地址</span>
-      </el-col>
-      <el-col :span="16">
-        <el-input
-          class="text"
-          placeholder="Input Proxy..."
-          v-model="proxy"
-          clearable
-          :style="{ width: '300px' }"
+    <el-tabs tab-position="left">
+      <el-tab-pane label="通用设置">
+        <CommonSetting
+          @ok="handleOk"
+          :proxy="value"
+          @cancel="handleCancel"
+          :dialogVisible="modalVisible"
         />
-      </el-col>
-      <el-col :span="4">
-        <el-button link @click="handleOk"> 设置 </el-button>
-      </el-col>
-    </el-row>
-    <Device :dialogVisible="modalVisible"/>
+      </el-tab-pane>
+      <el-tab-pane label="虚拟背景和美颜">
+        <VideoEffect />
+    </el-tab-pane>
+    </el-tabs>
   </el-dialog>
 </template>
 <script>
-import Device from './device.vue'
-const DEFAULT_DEVICE = {
-  camera: "",
-  microphone: "",
-  speaker: "",
-};
+import CommonSetting from './CommonSetting';
+import VideoEffect from './VideoEffect';
+import { initVideoEffect } from '@/utils/initVideoEffect';
+
 export default {
   props: ["visible", "value", "modalVisible"],
-  data() {
-    return {
-      proxy: this.value,
-      cameraList: [],
-      microphoneList: [],
-      speakerList: [],
-      selectedDevice: DEFAULT_DEVICE,
-      selectedDeviceRef: DEFAULT_DEVICE,
-    };
-  },
-  emits:['cancel','ok'],
+  emits:['cancel', 'ok'],
   components:{
-    Device
+    VideoEffect,
+    CommonSetting,
+  },
+  beforeMount() {
+    initVideoEffect.init();
   },
   methods: {
     handleCancel() {
       this.$emit("cancel");
     },
-    handleOk() {
-      if (this.value !== this.proxy) {
-        this.$emit("ok", this.proxy);
-      } else {
-        this.handleCancel();
-      }
-    },
+
+    handleOk(value) {
+      this.$emit("ok", value);
+    }
   },
 };
 </script>
 <style scoped>
-.center {
-  display: flex !important;
-  align-items: center;
-  height: 40px;
-}
-
-.mb15 {
-  margin-bottom: 15px;
-}
-
-.el-row {
-  max-width: 500px;
-  margin: 0 auto 20px;
-}
-
-.xy-row {
-  margin: 0;
-}
 
 .xy__setting-dialog .el-row .text {
   margin-bottom: 0;
@@ -88,10 +56,6 @@ export default {
 
 .dialog-footer {
   text-align: right;
-}
-
-.el-dialog__body {
-  padding: 0 20px;
 }
 
 .el-message {
@@ -102,4 +66,15 @@ export default {
 .xy__login-btn.el-button--primary {
   margin-bottom: 20px;
 }
+</style>
+
+<style lang="scss">
+  .xy__setting-dialog .el-dialog__body {
+    padding: 0;
+    height: 66vh;
+
+    .el-tabs--left {
+      height: 100%;
+    }
+  }
 </style>

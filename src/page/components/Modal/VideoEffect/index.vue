@@ -254,6 +254,10 @@ onBeforeUnmount(() => {
         }
     }
 
+    .el-tabs {
+        height: 160px;
+    }
+
     // 视频镜像
     .local-video {
         transform: rotateY(180deg);

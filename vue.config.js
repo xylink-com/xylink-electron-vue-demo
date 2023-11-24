@@ -26,6 +26,9 @@ module.exports = defineConfig({
             schemes: ['xy-vue-electron'],
           },
         ],
+        extraResources: [
+          "./assets/**"
+        ],
         win: {
           icon: 'assets/logo256.ico',
           extraFiles: [

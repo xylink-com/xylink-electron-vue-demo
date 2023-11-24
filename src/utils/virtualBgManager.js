@@ -152,7 +152,7 @@ class BgManager {
             const customBgDir = await createUserDataChildDir(this.customDirPath);
 
             const presetBgFileList = await this.createBgList(presetBgDir, IVirtualBgType.PRESET);
-            const customBgFileList = await this.createBgList(customBgDir, IVirtualBgType.COSTOM);
+            const customBgFileList = await this.createBgList(customBgDir, IVirtualBgType.CUSTOM);
 
             /** merge */
             newBgFileList = [...presetBgFileList, ...customBgFileList];

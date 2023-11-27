@@ -6,17 +6,7 @@
 
 <script setup>
     import { defineProps } from 'vue';
+    import './index.scss';
     
     const props = defineProps(['class']);
 </script>
-
-<style lang="scss">
-.video-effect-unset-item {
-    display: flex;
-    .el-icon {
-        margin: auto;
-        font-size: 20px;
-    }
-    background-color: #e5e7f1;
-}
-</style>

@@ -51,6 +51,7 @@ import UnsetEffect from '../UnsetEffect';
 import closeIcon from '../assets/icons/close.png';
 // 背景虚化的图片
 import bg_01 from '../assets/virtual-bg/vb_01.png';
+import './index.scss';
 
 const message = {
     error: (message) => {
@@ -185,91 +186,3 @@ onBeforeUnmount(() => {
     bgManager.updateBg(selectedId, bgImgList);
 });
 </script>
-
-<style lang="scss">
-@import '~@/style/var.scss';
-
-.virtual-bg {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-
-    canvas {
-        width: 100%;
-        height: 100%;
-    }
-
-    &-item, .video-effect-unset-item {
-        width: 116px;
-        height: 67px;
-        cursor: pointer;
-        position: relative;
-        border-radius: 3px;
-        padding: 1px;
-        color: rgba(57, 57, 70, 0.6);
-        border: 2px solid transparent;
-
-        &:hover {
-            border-color: $primary-color;
-        }
-
-        &.selected-item {
-            color: $primary-color;
-            border-color: $primary-color;
-        }
-
-        &.default-item {
-            display: flex;
-
-            .anticon {
-                margin: auto;
-                font-size: 24px;
-            }
-
-            background-color: #e5e7f1;
-        }
-
-        &.add-item {
-            font-size: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-
-            &:hover {
-                color: $primary-color;
-            }
-
-            background-color: #e5e7f1;
-
-            .el-icon {
-                font-size: 18px;
-                margin-bottom: 4px;
-            }
-        }
-
-        .close-icon {
-            visibility: hidden;
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            top: -6px;
-            right: -6px;
-        }
-
-        &:hover .close-icon {
-            visibility: visible;
-        }
-
-        img {
-            width: 100%;
-            height: 100%;
-            border-radius: 3px;
-        }
-    }
-}
-
-div.virtual-bg-add-item-tooltip {
-    font-size: 12px;
-}
-</style>

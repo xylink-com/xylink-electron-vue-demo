@@ -32,6 +32,7 @@ import { VideoFilterStyle } from '@xylink/xy-electron-sdk';
 import store from '@/utils/videoEffectStore';
 import UnsetEffect from '../UnsetEffect';
 import { effectList } from './config';
+import './index.scss';
 
 const emit = defineEmits(['change']);
 
@@ -58,51 +59,3 @@ const handleSelect = (style) => {
     xyRTC.setVideoFilterEffect(style, level);
 }
 </script>
-
-<style lang="scss">
-@import '~@/style/var.scss';
-
-.video-filter-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.video-filter-item {
-    cursor: pointer;
-    text-align: center;
-    color: $lighter-color;
-    font-size: 12px;
-
-    &-label {
-        padding-top: 4px;
-    }
-
-    &:hover &-inner {
-        border-color: $primary-color;
-    }
-
-    &.selected-item {
-        color: $primary-color;
-        
-        .video-filter-item-inner {
-            border-color: $primary-color;
-        }
-    }
-
-    &-inner {
-        height: 54px;
-        width: 54px;
-        border-radius: 3px;
-        overflow: hidden;
-        display: flex;
-        border: 2px solid transparent;
-
-        img, .video-effect-unset-item {
-            height: 48px;
-            width: 48px;
-            margin: auto;
-        }
-    }
-}
-</style>

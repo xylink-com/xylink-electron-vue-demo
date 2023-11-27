@@ -33,6 +33,7 @@ import store from '@/utils/videoEffectStore';
 import xyRTC from '@/utils/xyRTC';
 import UnsetEffect from '../UnsetEffect';
 import { effectList } from './config';
+import './index.scss';
 
 const { NONE } = VideoBeautyStyle;
 const emit = defineEmits(['change']);
@@ -58,61 +59,3 @@ const handleSelect = (value) => {
     xyRTC.setVideoBeautyEffect(value, level);
 }
 </script>
-
-<style scoped lang="scss">
-@import '~@/style/var.scss';
-
-.video-beauty-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-
-    .video-beauty-item {
-        font-size: 12px;
-        cursor: pointer;
-        text-align: center;
-        color: $lighter-color;
-
-        &:hover .video-beauty-item-inner {
-            border-color: $primary-color;
-        }
-
-        &.selected-item {
-            color: $primary-color;
-
-            .video-beauty-item-inner {
-                border-color: $primary-color;
-            }
-        }
-
-        &-label {
-            padding-top: 4px;
-        }
-
-        &-inner {
-            width: 54px;
-            height: 54px;
-            border-radius: 3px;
-            display: flex;
-            border: 2px solid transparent;
-            background-color: white;
-
-            &>div {
-                width: 48px;
-                height: 48px;
-                margin: auto;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background-color: rgba(229, 231, 241, 1);
-            }
-
-            img {
-                width: 28px;
-                height: 28px;
-                vertical-align: middle;
-            }
-        }
-    }
-}
-</style>

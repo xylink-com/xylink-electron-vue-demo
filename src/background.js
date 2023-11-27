@@ -17,8 +17,8 @@ const isDevelopment = process.env.NODE_ENV !== "production";
 import { checkDeviceAccessPrivilege } from './utils/checkPrivilege'
 
 const RESOURCES_PATH = app.isPackaged
-  ? path.join(process.resourcesPath, "assets")
-  : path.join(__dirname, "../../assets");
+? path.join(process.resourcesPath, "assets")
+: path.join(__dirname, "../assets");
 
 export const getAssetPath = (...paths) => {
   return path.join(RESOURCES_PATH, ...paths);
@@ -26,8 +26,8 @@ export const getAssetPath = (...paths) => {
 
 const icon = getAssetPath("logo512.png");
 
-const width = 800;
-const height = 600;
+const width = 960;
+const height = 720;
 
 // 必须提前定义好，存储视频流数据
 global.sharedObject = {
@@ -221,6 +221,16 @@ function createWindow() {
         win.webContents.send("secondWindow", false);
       }
     }
+  });
+
+  // 获取 userData 目录
+  ipcMain.on('getUserDataDir', () => {
+    win.webContents.send('getUserDataDir', app.getPath('userData'));
+  });
+
+  // 获取 assets 目录
+  ipcMain.on('getAssetsDir', () => {
+    win.webContents.send('getAssetsDir', getAssetPath());
   });
 
   // 打开会控弹窗

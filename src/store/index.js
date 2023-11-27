@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { EventType, ProcessType, RecordStatus } from "@xylink/xy-electron-sdk";
+import { SettingMenu } from '@/utils/enum';
 
 export const useToolbarStore = defineStore("toolbar", {
   state: () => {
@@ -118,5 +119,16 @@ export const useCloudRecordInfo = defineStore('cloudRecordInfo',{
       recordStatus: RecordStatus.IDLE,
       isSelfRecord: false
     }
+  }
+});
+
+/**
+ * 设置中当前选中的菜单
+ */
+export const useSettingMenu = defineStore('settingTab', {
+  state: () => {
+    return {
+      selected: SettingMenu.COMMON
+    };
   }
 });

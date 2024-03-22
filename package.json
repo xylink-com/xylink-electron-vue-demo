@@ -18,7 +18,7 @@
   "dependencies": {
     "@electron/remote": "^2.0.9",
     "@element-plus/icons-vue": "^2.0.10",
-    "@xylink/xy-electron-sdk": "^3.10.3",
+    "@xylink/xy-electron-sdk": "3.10.3",
     "clone-deep": "^4.0.1",
     "core-js": "^3.8.3",
     "dayjs": "^1.11.7",

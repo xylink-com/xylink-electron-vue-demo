@@ -60,8 +60,7 @@ const switchModel = (val) => {
 const externalLogin = () => {
   const { extID, extUserId, displayName } = info;
 
-  // displayName中文在mac上可能会导致乱码，需要转成UTF-8
-  xyRTC.loginExternalAccount(extID, extUserId, encodeURI(displayName));
+  xyRTC.loginExternalAccount(extID, extUserId, displayName);
 };
 
 const onLogout = () => {

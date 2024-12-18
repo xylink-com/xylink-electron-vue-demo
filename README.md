@@ -15,36 +15,41 @@ export const ACCOUNT = {
 ```
 
 ## 集成开发
+
+从此版本开始，window平台支持64位
+
 ### 第一步
+
 安装依赖之前，检查`.npmrc`中配置
 
-windows环境下配置如下
+#### 32位配置如下
 ```bash
 arch=ia32
-platform=win32
 ```
-mac环境下，需要注释掉上述配置
+
+#### 64位配置如下
+```bash
+arch=x64
+```
+
+#### mac环境下，需要注释掉上述配置
+
 ```bash
 # arch=ia32
-# platform=win32
 ```
+
 ### 第二步
+
 安装依赖
+
 ```bash
 # 安装依赖
-$ yarn
+$ yarn install --ignore-engines
 ```
+
+> 注意：如果已经安装过依赖，但是需要切换不同平台，例如从windows 32位切换到64位，则需要删除node_modules目录和yarn.lock文件，重新安装依赖
 
 ### 第三步
-electron包安装，版本随意，此处演示
-```bash
-# window 安装32位electron
-$ yarn add electron@5.0.13 --arch=ia32
-
-# mac平台
-$ yarn add electron@5.0.13
-```
-### 第四步
 #### 开发环境（只需windows环境配置，mac环境忽略）
 
 进入项目 `根目录 -> node_modules -> @xylink -> xy-electron-sdk -> dll` 文件夹下，将`I420ToARGB.cso`文件复制到 `node_modules\electron\dist` 目录下
@@ -85,8 +90,11 @@ $ yarn dev
 ## 构建
 
 ```bash
-# windows
+# windows 32位
 $ yarn build:32
+
+# windows 64位
+$ yarn build:64
 
 # mac
 $ yarn build:mac

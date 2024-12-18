@@ -1,6 +1,6 @@
 {
   "name": "xy-electron-vue-demo",
-  "version": "3.10.4",
+  "version": "3.10.5",
   "private": true,
   "description": "electron sdk vue",
   "license": "MIT",
@@ -12,13 +12,14 @@
     "postuninstall": "electron-builder install-app-deps",
     "dev": "cross-env NODE_ENV=development vue-cli-service electron:serve",
     "build:32": "cross-env NODE_ENV=production vue-cli-service electron:build --win --ia32",
+    "build:64": "cross-env NODE_ENV=production vue-cli-service electron:build --win --x64",
     "build:mac": "cross-env NODE_ENV=production vue-cli-service electron:build --mac"
   },
   "main": "background.js",
   "dependencies": {
     "@electron/remote": "^2.0.9",
     "@element-plus/icons-vue": "^2.0.10",
-    "@xylink/xy-electron-sdk": "^3.10.4",
+    "@xylink/xy-electron-sdk": "^3.10.5",
     "clone-deep": "^4.0.1",
     "core-js": "^3.8.3",
     "dayjs": "^1.11.7",
